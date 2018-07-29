@@ -76,7 +76,8 @@ static void use(const char * filename) {
 // legge un messaggio (testuale o file) e lo memorizza in MSGS (array globale)
 static int readMessage(int connfd, message_hdr_t *hdr) {
     
-    if (readData(connfd, &MSGS[msgcur].data) <= 0) {
+    if (readData(
+    connfd, &MSGS[msgcur].data) <= 0) {
 	perror("reading data");
 	return -1; 
     }

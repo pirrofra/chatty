@@ -20,7 +20,7 @@ typedef enum {
     /* ------------------------------------------ */
     /*      operazioni che il server deve gestire */
     /* ------------------------------------------ */
-    REGISTER_OP      = 0,   /// richiesta di registrazione di un ninckname
+    REGISTER_OP      = 0,   /// richiesta di registrazione di un nickname
 
     CONNECT_OP       = 1,   /// richiesta di connessione di un client
     POSTTXT_OP       = 2,   /// richiesta di invio di un messaggio testuale ad un nickname o groupname
@@ -54,9 +54,16 @@ typedef enum {
 
     OP_FAIL         = 25,  // generico messaggio di fallimento
     OP_NICK_ALREADY = 26,  // nickname o groupname gia' registrato
-    OP_NICK_UNKNOWN = 27,  // nickname non riconosciuto
+    OP_NICK_UNKNOWN = 27,  // nickname o groupname non riconosciuto
     OP_MSG_TOOLONG  = 28,  // messaggio con size troppo lunga
     OP_NO_SUCH_FILE = 29,  // il file richiesto non esiste
+    OP_NICK_TOOLONG = 30,  //nickname troppo lungo
+    OP_CLNT_ALREADY_CONNECTED = 31,  //client già connesso
+    OP_USR_ALREADY_CONNECTED = 32, //utente già connesso
+    OP_USR_NOT_CONNECTED = 33, //utente non connesso
+    OP_TOO_MANY_CLIENT = 34, //troppi client connessi
+    OP_USR_ALREADY_IN_GROUP = 35, //utente già nel gruppo
+    OP_NO_PERMISSION = 36, //utente non ha il permesso di eseguire l'operazione
     
 
     /* 

@@ -14,6 +14,8 @@
 #define UNIX_PATH_MAX  64
 #endif
 
+#include <sys/socket.h>
+#include <stdio.h>
 #include <message.h>
 
 /**
@@ -34,7 +36,6 @@
  *         -1 in caso di errore
  */
 int openConnection(char* path, unsigned int ntimes, unsigned int secs);
-
 // -------- server side ----- 
 /**
  * @function readHeader
@@ -71,6 +72,24 @@ int readData(long fd, message_data_t *data);
  */
 int readMsg(long fd, message_t *msg);
 
+/**
+ * @function openDispatcher
+ * @brief contiene le funzioni che implementano la creazione del dispatcher per l'accettazione delle connessioni dei clients
+ * @param path   indirizzo del socket
+ * @return il descrittore del dispatcher se ha successo, -1 se fallisce
+ */
+long openDispatcher(char* path);
+
+/**
+ * @function acceptConnection
+ * @brief contiene funzioni che implementano l'accettazione delle connessioni dai client. Se non ci sono connessioni in attesa, si blocca in attesa di una nuova richiesta di connessione.
+ * @param sock_fd    descrittore del dispatcher
+ * @param path       indirizzo del socket
+ * @return il descrittore associato alla nuova connessione, -1 errore
+ */
+long acceptConnection(long sock_fd, char* path);
+
+
 /* da completare da parte dello studente con altri metodi di interfaccia */
 
 
@@ -96,7 +115,6 @@ int sendRequest(long fd, message_t *msg);
  * @return <=0 se c'e' stato un errore
  */
 int sendData(long fd, message_data_t *msg);
-
 
 /* da completare da parte dello studente con eventuali altri metodi di interfaccia */
 
