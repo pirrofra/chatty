@@ -25,9 +25,8 @@ typedef struct{
  * @param strlst stringlist da inizializzare
  * @param dim dimensione dell'array
  * @param str_dim dimensione delle stringhe
- * @return 0 successo, -1 errore
 */
-int initializeStringList(stringlist** strlst, int dim, int str_dim);
+void initializeStringList(stringlist** strlst, int dim, int str_dim);
 
 /**
  * @function addString

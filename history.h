@@ -32,12 +32,11 @@ typedef struct{
 
 /**
  * @function initializeHistory
- * @brief funzione per inizializzare la history
+ * @brief procedura per inizializzare la history
  * @param storia puntatore alla history da inizializzare
  * @param size dimensione della history
- * @return 0 successo, -1 errore
 */
-int initializeHistory(history** storia, int size);
+void initializeHistory(history** storia, int size);
 
 /**
  * @function addMessage

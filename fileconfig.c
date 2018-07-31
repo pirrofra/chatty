@@ -22,7 +22,10 @@ configs* readConfig(char* path){
     FILE* fd;
     int size=0;
     fd=fopen(path,"r");
-    if(fd==NULL)return NULL;
+    if(fd==NULL){
+        perror("Apertura File");
+        return NULL;
+    }
     fseek(fd,0,SEEK_END);
     size=ftell(fd);
     rewind(fd);
@@ -84,6 +87,7 @@ configs* readConfig(char* path){
     free(s1);
     if(checkC(configurazione)==0){
         freeC(configurazione);
+        printf("File Configurazione Incompleto\n");
         return NULL;
     }
     return configurazione;
@@ -102,6 +106,7 @@ configs* initializeConfig(){
     ret->MaxHistMsgs=0;
     return ret;
 }
+
 int checkC(configs* configurazione){
     return (configurazione->UnixPath!=NULL)&&(configurazione->DirName!=NULL)&&(configurazione->StatFileName!=NULL)&&(configurazione->MaxConnections!=0)&&(configurazione->MaxFileSize!=0)&&(configurazione->MaxMsgSize!=0)&&(configurazione->MaxHistMsgs!=0);
 }

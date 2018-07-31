@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include <time.h>
+#include<pthread.h>
 
 struct statistics {
     unsigned long nusers;                       // n. di utenti registrati
@@ -19,9 +20,19 @@ struct statistics {
     unsigned long nfiledelivered;               // n. di file consegnati
     unsigned long nfilenotdelivered;            // n. di file non ancora consegnati
     unsigned long nerrors;                      // n. di messaggi di errore
+    pthread_mutex_t lock;
 };
 
+
+
 /* aggiungere qui altre funzioni di utilita' per le statistiche */
+/**
+ * @function initializeStats
+ * @brief inizializza la struttura dati per le statistiche
+ * @param stats puntatore alla struttura dati statistics da inizializzare
+ * @return 0 successo, -1 errore
+*/
+int initializeStats(statistics** stats);
 
 
 /**

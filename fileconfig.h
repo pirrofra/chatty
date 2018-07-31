@@ -41,10 +41,24 @@ typedef struct{
 */
 configs* readConfig(char* path);
 
+/*
+ * @function initializeConfig
+ * @brief inizializza una stuttura configs
+ * @return puntatore alla struttura configs
+*/
 configs* initializeConfig();
 
+/**
+ * @function checkC
+ * @brief controlla che tutte le informazioni necessarie siano state inserite in configs
+ * @return 1 se configs è completo, 0 altrimenti
+*/
 int checkC(configs*);
 
+/**
+ * @function freeC
+ * @brief dealloca la struttura dati configs
+*/
 void freeC(configs*);
 
 

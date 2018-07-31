@@ -14,7 +14,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-int initializeStringList(stringlist** strlst, int dim, int str_dim){
+void initializeStringList(stringlist** strlst, int dim, int str_dim){
     if(dim<=0 || str_dim <=0) return -1;
     (*strlst)=malloc(sizeof(stringlist));
     MEMORYCHECK(*strlst);
@@ -28,16 +28,16 @@ int initializeStringList(stringlist** strlst, int dim, int str_dim){
     }
     (*strlst)->lenght=dim;
     (*strlst)->str_dim=str_dim;
-    return 0;
 }
 
 int addString(stringlist* strlst,int i, char* stringa){
-    if(i>=strlst->lenght) return -1;
+    if(i>=strlst->lenght||strlst==NULL||stringa==NULL) return -1;
     strncpy(strlst->array[i],stringa,(strlst->str_dim+1));
     return 0;
 }
 
 char* transform(stringlist* strlst){
+    if(strlst==NULL) return NULL;
     char* ret;
     char separatore[1]={' '};
     ret=malloc(strlst->lenght*(strlst->str_dim+1)*sizeof(char));
@@ -53,7 +53,10 @@ char* transform(stringlist* strlst){
 }
 
 void freeStringList(stringlist* strlst){
-    for(int i=0;i<strlst->lenght;i++) free(strlst->array[i]);
-    free(strlst->array);
-    free(strlst);
+    if(strlst!=NULL){
+        for(int i=0;i<strlst->lenght;i++) free(strlst->array[i]);
+        free(strlst->array);
+        free(strlst);
+    }
 }
+

@@ -74,8 +74,7 @@ long acceptConnection(long sock_fd, char* path){
 int readHeader(long connfd, message_hdr_t *hdr){
     int byte_read=0;
     hdr=memset(hdr,0,sizeof(message_hdr_t));
-    byte_read=read(connfd,hdr,sizeof(message_hdr_t));
-    if(byte_read<0) return -1;
+    TRYREAD(read(connfd,hdr,sizeof(message_hdr_t)));
     else return 0;
 }
 
@@ -84,8 +83,7 @@ int readData(long fd, message_data_t *data){
     int len=0;
     char* position;
     data=memset(data,0,sizeof(message_data_t));
-    byte_read=read(fd,&(data->hdr),sizeof(message_data_hdr_t));
-    if(byte_read<0) return -1;
+    TRYREAD(read(fd,&(data->hdr),sizeof(message_data_hdr_t)));
     len=data->hdr.len;
     position=data->buf;
     if(len==0) data->buf=NULL;
@@ -96,6 +94,7 @@ int readData(long fd, message_data_t *data){
     while(len>0){
         byte_read=read(fd,position, data->hdr.len);
         if(byte_read<0) {
+            perror("Read");
             free(data->buf);
             return -1;
         }
@@ -117,13 +116,11 @@ int sendData(long fd, message_data_t *msg){
     int byte_wrote=0;
     int len=0;
     char* position;
-    byte_wrote=write(fd,&(msg->hdr),sizeof(message_data_hdr_t));
-    if(byte_wrote<0) return -1;
+    TRYWRITE(write(fd,&(msg->hdr),sizeof(message_data_hdr_t)));
     len=msg->hdr.len;
     position=msg->buf;
     while(len<0){
-        byte_wrote=write(fd,&(msg->buf),len);
-        if(byte_wrote<0) return-1;
+        TRYWRITE(byte_wrote=write(fd,&(msg->buf),len));
         len-=byte_wrote;
         position+=byte_wrote;
     }
@@ -132,8 +129,7 @@ int sendData(long fd, message_data_t *msg){
 
 int sendRequest(long fd, message_t *msg){
     int byte_wrote=0;
-    byte_wrote=write(fd,&(msg->hdr),sizeof(message_hdr_t));
-    if(byte_wrote<0) return -1;
+    TRYWRITE(write(fd,&(msg->hdr),sizeof(message_hdr_t)));
     byte_wrote=sendData(fd,&(msg->data));
     return byte_wrote;
 }

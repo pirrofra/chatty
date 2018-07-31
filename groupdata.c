@@ -11,7 +11,7 @@
 */
 #include<config.h>
 
-int initializeGroup(groupdata** group,char* creator, int dim){
+void initializeGroup(groupdata** group,char* creator, int dim){
     char*newnick;
     *group=malloc(sizeof(groupdata));
     MEMORYCHECK(*group);
@@ -22,7 +22,6 @@ int initializeGroup(groupdata** group,char* creator, int dim){
     (*group)->admin=newnick;
     (*group)->users=icl_hash_create(dim,hash_pjw,string_compare);
     MEMORYCHECK((*group)->users);
-    return 0;
 }
 
 int addMember(groupdata* group, char* nickname){

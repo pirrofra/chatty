@@ -20,6 +20,7 @@
 
 #include <limits.h>
 
+#include <config.h>
 
 #define BITS_IN_int     ( sizeof(int) * CHAR_BIT )
 #define THREE_QUARTERS  ((int) ((BITS_IN_int * 3) / 4))

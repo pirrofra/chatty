@@ -28,9 +28,8 @@ typedef struct{
  * @param group puntatore al gruppo da inizializzare
  * @param creator creatore del gruppo
  * @param dim dimensione della tabella con i nickname
- * @return 0 successo, -1 errore
 */
-int initializeGroup(groupdata** group,char* creator, int dim);
+void initializeGroup(groupdata** group,char* creator, int dim);
  
 /**
  * @function addMember

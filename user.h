@@ -29,6 +29,7 @@
 */
 typedef struct {
     history* user_history;
+    int pendingmsg
     int fd;
 } userdata;
 
@@ -60,13 +61,11 @@ typedef struct{
  * @function initializeManager
  * @brief inizializza il gestore degli Utenti
  * @param usrmngr puntantore al manager da inizializzare
- * @param dimr dimensione HashTable Utenti registrati
- * @param dimg dimensione HashTable Gruppi 
  * @param max_user massimo utenti connessi
  * @param dim_history numero massimo di messaggi salvabili
  * @return 0 operazione riuscita, -1 errore
 */
-int initializeManager(manager** usrmngr, int dimr,int dimg, int max_user, int dim_history);
+int initializeManager(manager** usrmngr, int max_user, int dim_history);
  
 
 /**

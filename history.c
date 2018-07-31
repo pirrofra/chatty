@@ -16,7 +16,7 @@
 #ifndef _history_c_
 #define _history_c_
 
-int initializeHistory(history** storia, int size){
+void initializeHistory(history** storia, int size){
     int err=0;
     *storia=malloc(sizeof(history));
     MEMORYCHECK(*storia);
@@ -30,7 +30,7 @@ int initializeHistory(history** storia, int size){
 }
 
 int addMessage(history* storia, message_t* mex){
-    if(mex==NULL) return -1;
+    if(mex==NULL || storia==NULL) return -1;
     int i=(history->last+1)%history->size;
     if(history->data[i]!=NULL){
         free(history->data[i]);
