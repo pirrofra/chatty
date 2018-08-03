@@ -28,8 +28,9 @@
 #define MUTEXLOCK(X) if(errno=pthread_mutex_lock(&(X))) perror("Mutex Lock"); else{
 #define MUTEXUNLOCK(X) if(errno=pthread_mutex_unlock(&(X))) perror("Mutex Unlock");} 
 #define SOCKETCHECK(X) if((X)==-1){perror("Creazione Socket");return -1;}
-#define CHECKWRITE(X) if((X)==-1){perror("Write");return -1};
-#define CHECKREAD(X) if((X)==-1){perror("Read");return -1};
+#define TRYWRITE(X) if((X)==-1){perror("Write");return -1};
+#define TRYREAD(X) if((X)==-1){perror("Read");return -1};
+
 // to avoid warnings like "ISO C forbids an empty translation unit"
 typedef int make_iso_compilers_happy;
 

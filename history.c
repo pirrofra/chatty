@@ -22,28 +22,34 @@ void initializeHistory(history** storia, int size){
     MEMORYCHECK(*storia);
     (*storia)->data=malloc(size*sizeof(message_t*));
     MEMORYCHEK((*storia)->data);
-    memset((*storia)->data,NULL,size);
+    memset((*storia)->data,NULL,size*sizeof(char));
+    (*storia)->pending=malloc(size*sizeof(int));
+    MEMORYCHECK((*storia)->pending);
+    memset((*storia)->pending,0,size*sizeof(int));
     history->size=size;
     history->first=0;
     history->last=size-1;
     return 0;
 }
 
-int addMessage(history* storia, message_t* mex){
+int addMessage(history* storia, message_t* mex,int fd){
     if(mex==NULL || storia==NULL) return -1;
-    int i=(history->last+1)%history->size;
-    if(history->data[i]!=NULL){
-        free(history->data[i]);
-        history->first=i+1;
+    int i=(storia->last+1)%history->size;
+    if(storia->data[i]!=NULL){
+        free(storia->data[i]);
+        storia->first=i+1;
     }
-    history->data[i]=mex;
-    history->last=i;
+    if(fd==-1) storia->pending[i]=1
+    else storia->pending[i]=0
+    storia->data[i]=mex;
+    storia->last=i;
     return 0;
 }
 
 void freeHistory(history* storia){
     if(storia!=NULL){
         free(storia->data);
+        free(storia->pending);
         free(storia);
     }
 }

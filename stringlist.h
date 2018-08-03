@@ -16,7 +16,7 @@
 typedef struct{
     int lenght;
     int str_dim;
-    char** array;
+    char* str;
 } stringlist;
 
 /**
@@ -38,13 +38,6 @@ void initializeStringList(stringlist** strlst, int dim, int str_dim);
 */
 int addString(stringlist* strlst, int i, char* stringa);
 
-/**
- * @function transform
- * @brief trasforma la lista di stringhe in una stringa sola
- * @param strlst
- * @return stringa trasformata in caso di successo, NULL in caso di errore
-*/
-char* transform(stringlist* strlst);
 
 /**
  * @function freeStringList

@@ -58,10 +58,11 @@ configs* readConfig(char* path){
             }
             else if(strcmp(s1,"DirName")==0){
                char* path;
-                path=malloc((strlen(s2)+1)*sizeof(char));
+                path=malloc((strlen(s2)+2)*sizeof(char));
                 MEMORYCHECK(path);
-                memset(path,'\0',(strlen(s2)+1)*sizeof(char));
+                memset(path,'\0',(strlen(s2)+2)*sizeof(char));
                 strncpy(path,s2,strlen(s2)*sizeof(char));
+                if(path[strlen(path)-1]!='/') strncat(path,"/",sizeof(char));
                 configurazione->DirName=path;
                 
             }

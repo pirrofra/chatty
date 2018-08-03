@@ -5,7 +5,7 @@
  * Docenti: Prencipe, Torquati
  * 
  */
-/** @file user.h
+/** @file user.c
   * @author Francesco Pirrò 544539
   * si dichiara che il contenuto di questo file è in ogni sua parte opera originale  dell'autore
 */  
@@ -84,11 +84,10 @@ op_t registerUser(manager* usrmngr, char* nickname){
     err=icl_hash_insert(usrmngr->registred_user,newnick, data);
     if(err==-1)
         result=OP_FAIL;
-    else if(err==0)
+    else if(err==0||||groupexist(usrmngr,name))
         result=OP_NICK_ALREADY;
     else{
         data->fd=-1;
-        data->pendingmsg=0;
         initializeHistory(&(data->user_history),usrmngr->history_size);
         result=OP_OK;
     }
@@ -219,13 +218,11 @@ int storeMessage(manager* usrmngr, char* nickname ,message_t* msg){
     data=icl_hash_find(usrmngr->registred_user, nickname);
     if(data==NULL) result=-3;
     else{
-        tmp=addMessage(data->user_history, msg);
+        tmp=addMessage(data->user_history, msg,data->fd);
         if(tmp==-1)
             result=-2;
-        else {
+        else 
             result=data->fd;
-            if(result==-1) ++data->pendingmsg;
-        }
     }
     MUTEXUNLOCK(usrmngr->lockr[i]);
     return result;
@@ -236,6 +233,7 @@ int storeMessage(manager* usrmngr, char* nickname ,message_t* msg){
 op_t createGroup(manager* usrmngr, char* creator, char* name){
     op_t result=OP_FAIL;
     groupdata* group;
+    userdata* data;
     char* newname;
     int tmp;
     if(usrmngr==NULL||creator==NULL||name==NULL) return OP_FAIL;
@@ -246,14 +244,21 @@ op_t createGroup(manager* usrmngr, char* creator, char* name){
     strncpy(newname,name,MAX_NAME_LENGTH*sizeof(char));
     int h=0;
     h=hash_pjw((void*) name)%NUMMUTEX;
-    MUTEXLOCK(usrmngr->lockg[h]);
-    tmp=icl_hash_insert(usrmngr->groups, newname, group);
-    if(tmp==-1)
-        result=OP_FAIL;
-    else if(tmp==0)
-        result=OP_NICK_ALREADY;
-    else result=OP_OK;
-    MUTEXUNLOCK(usrmngr->lockg[h]);
+    MUTEXLOCK(usrmngr->lockr[h]);
+    data=icl_hash_find(usrmngr->registred_user,name);
+    if(!data){
+        MUTEXLOCK(usrmngr->lockg[h]);
+        tmp=icl_hash_insert(usrmngr->groups, newname, group);
+        if(tmp==-1)
+            result=OP_FAIL;
+        else if(tmp==0)
+            result=OP_NICK_ALREADY;
+        else result=OP_OK;
+        MUTEXUNLOCK(usrmngr->lockg[h]);
+    }
+    else result=OP_NICK_ALREADY;
+    
+    MUTEXUNLOCK(usrmngr->lockr[h]);
     if(result==OP_FAIL || result==OP_NICK_ALREADY){
         free(newname);
         freeGroup(group);
@@ -416,5 +421,26 @@ stringlist* registredUserList(manager* usrmngr){
         ret=NULL;
     }      
     return ret;
+}
+
+int groupexist(manager* usrmngr, char* name){
+    int result=0;
+    int i=hash_pjw((void*) name)%NUMMUTEX;
+    MUTEXLOCK(usrmngr->lockg[i]);
+    if(icl_hash_find(usrmngr->groups,name)) result=1;
+    else result=0;
+    MUTEXUNLOCK(usrmngr->lockg[i]);
+    return result;
+}
+
+int isingroup(manager* usrmngr, char* nickname,char* groupname){
+    int result=0;
+    groupdata* group;
+    int i=hash_pjw((void*) groupname)%NUMMUTEX;
+    MUTEXUNLOCK(usrmngr->lockg[i]);
+    group=icl_hash_find(usrmngr->groups,groupname);
+    if(group && icl_hash_find(group->users, nickname) result=1;   
+    MUTEXLOCK(usrmngr->lockg[i]);
+    return result;
 }
 
