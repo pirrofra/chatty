@@ -3,7 +3,7 @@
  *
  * Dipartimento di Informatica Università di Pisa
  * Docenti: Prencipe, Torquati
- * 
+ *
  */
 /** @file fileconfig.c
   * @author Francesco Pirrò 544539
@@ -14,6 +14,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
+#include<config.h>
 
 configs* readConfig(char* path){
     configs* configurazione;
@@ -39,7 +40,7 @@ configs* readConfig(char* path){
     memset(s1,'\0',15*sizeof(char));
     while(fgets(line,size*sizeof(char),fd)!=NULL){
         if(line[0]!='#' && strlen(line)>1){
-            int len;        
+            int len;
             char* s2;
             len=strlen(line);
             s2=malloc(len*sizeof(char));
@@ -54,7 +55,7 @@ configs* readConfig(char* path){
                 memset(path,'\0',(strlen(s2)+1)*sizeof(char));
                 strncpy(path,s2,strlen(s2)*sizeof(char));
                 configurazione->UnixPath=path;
-                
+
             }
             else if(strcmp(s1,"DirName")==0){
                char* path;
@@ -64,7 +65,7 @@ configs* readConfig(char* path){
                 strncpy(path,s2,strlen(s2)*sizeof(char));
                 if(path[strlen(path)-1]!='/') strncat(path,"/",sizeof(char));
                 configurazione->DirName=path;
-                
+
             }
             else if(strcmp(s1,"StatFileName")==0){
                 char* path;
@@ -73,7 +74,7 @@ configs* readConfig(char* path){
                 memset(path,'\0',(strlen(s2)+1)*sizeof(char));
                 strncpy(path,s2,strlen(s2)*sizeof(char));
                 configurazione->StatFileName=path;
-                
+
             }
             else if(strcmp(s1,"MaxConnections")==0)configurazione->MaxConnections=strtoul(s2,NULL,10);
             else if(strcmp(s1,"MaxFileSize")==0) configurazione->MaxFileSize=strtoul(s2,NULL,10);

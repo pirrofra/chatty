@@ -3,7 +3,7 @@
  *
  * Dipartimento di Informatica Università di Pisa
  * Docenti: Prencipe, Torquati
- * 
+ *
  */
 /** @file requestexec.h
   * @author Francesco Pirrò 544539
@@ -20,168 +20,211 @@
 
 /**
  * @function register_op
- * @brief procedura che registra un utente
+ * @brief funzione che registra un utente
  * @param fd file descriptor del socket su cui avviene la connessione
  * @param msg messaggio inviato al server sul socket fd
  * @param usrmngr gestore degli utenti
  * @param configurazione configurazione del server
  * @param chattystats statistiche del server
+ * @return 0 se la connessione è ancora attiva, -1 se il client si è disconesso.
 */
-void register_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct stats* chattystats);
-
+int register_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats);
 
 /**
  * @function connect_op
- * @brief procedura che connette un utente
+ * @brief funzione che connette un utente
  * @param fd file descriptor del socket su cui avviene la connessione
  * @param msg messaggio inviato al server sul socket fd
  * @param usrmngr gestore degli utenti
  * @param configurazione configurazione del server
  * @param chattystats statistiche del server
+ * @return 0 se la connessione è ancora attiva, -1 se il client si è disconesso.
 */
-void connect_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct stats* chattystats);
+int connect_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats);
 
+/**
+ * @function copymex
+ * @brief funzione che copia un messaggio;
+ * @param mex messaggio da copiare
+ * @return NULL in caso di fallimento, o un puntatore ad una copia di mex
+*/
+message_t* copymex(message_t mex);
 
 /**
  * @function posttxt_op
- * @brief procedura che manda un messaggio ad un utente
+ * @brief funzione che notifica l'arrivo di un messaggio ad un utente
  * @param fd file descriptor del socket su cui avviene la connessione
  * @param msg messaggio inviato al server sul socket fd
  * @param usrmngr gestore degli utenti
  * @param configurazione configurazione del server
  * @param chattystats statistiche del server
+ * @return op_t estio dell'operazione
 */
-void posttxt_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct stats* chattystats);
+op_t notifymex(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats);
+
+/**
+ * @function posttxt_op
+ * @brief funzione che manda un messaggio ad un utente
+ * @param fd file descriptor del socket su cui avviene la connessione
+ * @param msg messaggio inviato al server sul socket fd
+ * @param usrmngr gestore degli utenti
+ * @param configurazione configurazione del server
+ * @param chattystats statistiche del server
+ * @return 0 se la connessione è ancora attiva, -1 se il client si è disconesso.
+*/
+int posttxt_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats);
 
 
 /**
  * @function posttextall_op
- * @brief procedura che manda un messaggio a tutti gli utenti
+ * @brief funzione che manda un messaggio a tutti gli utenti
  * @param fd file descriptor del socket su cui avviene la connessione
  * @param msg messaggio inviato al server sul socket fd
  * @param usrmngr gestore degli utenti
  * @param configurazione configurazione del server
  * @param chattystats statistiche del server
+ * @return 0 se la connessione è ancora attiva, -1 se il client si è disconesso.
 */
-void posttextall_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct stats* chattystats);
+int posttextall_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats);
 
 
 /**
  * @function postfile_op
- * @brief procedura che invia un file all'utente 
+ * @brief funzione che invia un file all'utente
  * @param fd file descriptor del socket su cui avviene la connessione
  * @param msg messaggio inviato al server sul socket fd
  * @param usrmngr gestore degli utenti
  * @param configurazione configurazione del server
  * @param chattystats statistiche del server
+ * @return 0 se la connessione è ancora attiva, -1 se il client si è disconesso.
 */
-void postfile_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct stats* chattystats);
+int postfile_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats);
 
 /**
  * @function getfile_op
- * @brief procedura che recupera un file inviato all'utente 
+ * @brief funzione che recupera un file inviato all'utente
  * @param fd file descriptor del socket su cui avviene la connessione
  * @param msg messaggio inviato al server sul socket fd
  * @param usrmngr gestore degli utenti
  * @param configurazione configurazione del server
  * @param chattystats statistiche del server
+ * @return 0 se la connessione è ancora attiva, -1 se il client si è disconesso.
 */
-void getfile_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct stats* chattystats);
+int getfile_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats);
 
 
 /**
  * @function getprevmsgs_op
- * @brief procedura che invia la history dei messaggi all'utente
+ * @brief funzione che invia la history dei messaggi all'utente
  * @param fd file descriptor del socket su cui avviene la connessione
  * @param msg messaggio inviato al server sul socket fd
  * @param usrmngr gestore degli utenti
  * @param configurazione configurazione del server
  * @param chattystats statistiche del server
+ * @return 0 se la connessione è ancora attiva, -1 se il client si è disconesso.
 */
-void getprevmsgs_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct stats* chattystats);
+int getprevmsgs_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats);
 
 
 /**
  * @function usrlist_op
- * @brief procedura che invia la lista degli utenti connessi al momento
+ * @brief funzione che invia la lista degli utenti connessi al momento
  * @param fd file descriptor del socket su cui avviene la connessione
  * @param msg messaggio inviato al server sul socket fd
  * @param usrmngr gestore degli utenti
  * @param configurazione configurazione del server
  * @param chattystats statistiche del server
+ * @return 0 se la connessione è ancora attiva, -1 se il client si è disconesso.
 */
-void usrlist_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct stats* chattystats);
+int usrlist_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats);
 
 
 /**
  * @function unregister_op
- * @brief procedura che deregistra un utente
+ * @brief funzione che deregistra un utente
  * @param fd file descriptor del socket su cui avviene la connessione
  * @param msg messaggio inviato al server sul socket fd
  * @param usrmngr gestore degli utenti
  * @param configurazione configurazione del server
  * @param chattystats statistiche del server
+ * @return 0 se la connessione è ancora attiva, -1 se il client si è disconesso.
 */
-void unregister_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct stats* chattystats);
+int unregister_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats);
 
 
 /**
  * @function disconnect_op_op
- * @brief procedura che disconnette un utente
+ * @brief funzione che disconnette un utente
  * @param fd file descriptor del socket su cui avviene la connessione
  * @param msg messaggio inviato al server sul socket fd
  * @param usrmngr gestore degli utenti
  * @param configurazione configurazione del server
  * @param chattystats statistiche del server
+ * @return 0 se la connessione è ancora attiva, -1 se il client si è disconesso.
 */
-void disconnect_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct stats* chattystats);
+int disconnect_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats);
 
 
 /**
  * @function creategroup_op
- * @brief procedura che  crea un gruppo
+ * @brief funzione che  crea un gruppo
  * @param fd file descriptor del socket su cui avviene la connessione
  * @param msg messaggio inviato al server sul socket fd
  * @param usrmngr gestore degli utenti
  * @param configurazione configurazione del server
  * @param chattystats statistiche del server
+ * @return 0 se la connessione è ancora attiva, -1 se il client si è disconesso.
 */
-void creategroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct stats* chattystats);
+int creategroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats);
 
 
 /**
  * @function addgroup_op
- * @brief procedura che aggiunge un utente ad un gruppo
+ * @brief funzione che aggiunge un utente ad un gruppo
  * @param fd file descriptor del socket su cui avviene la connessione
  * @param msg messaggio inviato al server sul socket fd
  * @param usrmngr gestore degli utenti
  * @param configurazione configurazione del server
  * @param chattystats statistiche del server
+ * @return 0 se la connessione è ancora attiva, -1 se il client si è disconesso.
 */
-void addgroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct stats* chattystats);
+int addgroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats);
 
 
 /**
  * @function delfromgroup_op
- * @brief procedura che elimina un utente da un gruppo
+ * @brief funzione che elimina un utente da un gruppo
  * @param fd file descriptor del socket su cui avviene la connessione
  * @param msg messaggio inviato al server sul socket fd
  * @param usrmngr gestore degli utenti
  * @param configurazione configurazione del server
  * @param chattystats statistiche del server
+ * @return 0 se la connessione è ancora attiva, -1 se il client si è disconesso.
 */
-void delfromgroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct stats* chattystats);
+int delfromgroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats);
 
 
 /**
  * @function delgroup_op
- * @brief procedura che elimina un gruppo
+ * @brief funzione che elimina un gruppo
  * @param fd file descriptor del socket su cui avviene la connessione
  * @param msg messaggio inviato al server sul socket fd
  * @param usrmngr gestore degli utenti
  * @param configurazione configurazione del server
  * @param chattystats statistiche del server
+ * @return 0 se la connessione è ancora attiva, -1 se il client si è disconesso.
 */
-void delgroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct stats* chattystats);
+int delgroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats);
+
+/**
+ * @function execute
+ * @brief funzione che legge un messaggio inviato al server sul socket fd e ne esegue la richiesta
+ * @param fd file descriptor del socket su cui avviene la connessione
+ * @param usrmngr gestore degli utenti
+ * @param configurazione configurazione del server
+ * @param chattystats statistiche del server
+ * @return 0 se la connessione è ancora attiva, -1 se il client si è disconesso.
+*/
+int execute(int fd, manager* usrmngr, configs* configurazione,struct statistics* chattystats);
 
 #endif //_requestexec_h_

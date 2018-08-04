@@ -3,7 +3,7 @@
  *
  * Dipartimento di Informatica Università di Pisa
  * Docenti: Prencipe, Torquati
- * 
+ *
  */
 /** @file history.h
   * @author Francesco Pirrò 544539
@@ -20,8 +20,9 @@
  * @var data array di puntatori ai messaggi
  * @var pending array per segnare i messaggi ancora da consegnare
  * @var size dimensione dell'array
- * @first posizione del primo messaggio arrivato
- * @last posizione dell'ultimo messaggio arrivato
+ * @var first posizione del primo messaggio arrivato
+ * @var last posizione dell'ultimo messaggio arrivato
+ * @var nel numero di elementi contenuti
 */
 typedef struct{
     message_t** data;
@@ -29,6 +30,7 @@ typedef struct{
     int size;
     int first;
     int last;
+    unsigned int nel;
 } history;
 
 
@@ -57,6 +59,6 @@ int addMessage(history* storia, message_t* mex, int fd);
  * @brief libera lo spazio allocato dalla History
  * @param storia puntatore alla history da liberare
 */
-int freeHistory(history* storia);
+void freeHistory(history* storia);
 
 #endif //_history_h_

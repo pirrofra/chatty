@@ -3,12 +3,14 @@
  *
  * Dipartimento di Informatica Università di Pisa
  * Docenti: Prencipe, Torquati
- * 
+ *
  */
 /** @file groupdata.h
   * @author Francesco Pirrò 544539
   * si dichiara che il contenuto di questo file è in ogni sua parte opera originale  dell'autore
 */
+
+#include<icl_hash.h>
 
 /**
  * @struct groupdata
@@ -20,17 +22,17 @@ typedef struct{
     char* admin;
     icl_hash_t* users;
 }groupdata;
- 
- 
+
+
 /**
- * @function initializeGroup  
+ * @function initializeGroup
  * @brief inizializza il gruppo
  * @param group puntatore al gruppo da inizializzare
  * @param creator creatore del gruppo
  * @param dim dimensione della tabella con i nickname
 */
 void initializeGroup(groupdata** group,char* creator, int dim);
- 
+
 /**
  * @function addMember
  * @brief aggiunge un membro al gruppo
@@ -55,4 +57,3 @@ int kick(groupdata* group,char* nickname);
  * @param group gruppo da eliminare
 */
 void freeGroup(void* group);
-

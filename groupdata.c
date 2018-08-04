@@ -3,13 +3,16 @@
  *
  * Dipartimento di Informatica Università di Pisa
  * Docenti: Prencipe, Torquati
- * 
+ *
  */
 /** @file groupdata.h
   * @author Francesco Pirrò 544539
   * si dichiara che il contenuto di questo file è in ogni sua parte opera originale  dell'autore
 */
 #include<config.h>
+#include <groupdata.h>
+#include<stdlib.h>
+#include<string.h>
 
 void initializeGroup(groupdata** group,char* creator, int dim){
     char*newnick;
@@ -17,7 +20,7 @@ void initializeGroup(groupdata** group,char* creator, int dim){
     MEMORYCHECK(*group);
     newnick=malloc((MAX_NAME_LENGTH+1)*sizeof(char));
     MEMORYCHECK(newnick);
-    memset(newnick,/0,(MAX_NAME_LENGTH+1)*sizeof(char));
+    memset(newnick,'\0',(MAX_NAME_LENGTH+1)*sizeof(char));
     strncpy(newnick,creator,MAX_NAME_LENGTH*sizeof(char));
     (*group)->admin=newnick;
     (*group)->users=icl_hash_create(dim,hash_pjw,string_compare);
@@ -27,16 +30,17 @@ void initializeGroup(groupdata** group,char* creator, int dim){
 int addMember(groupdata* group, char* nickname){
     char* newnick=malloc((MAX_NAME_LENGTH+1)*sizeof(char));
     MEMORYCHECK(newnick);
-    memset(newnick,/0,(MAX_NAME_LENGTH+1)*sizeof(char));
+    memset(newnick,'\0',(MAX_NAME_LENGTH+1)*sizeof(char));
     strncpy(newnick,nickname,MAX_NAME_LENGTH*sizeof(char));
-    return icl_hash_insert(group->users,char* newnick,char* newnick);
+    return icl_hash_insert(group->users,newnick,newnick);
 }
 
 int kick(groupdata* group,char* nickname){
     return icl_hash_delete(group->users, nickname, free,NULL);
 }
 
-void freeGroup(void* group){
-    free(group->creator);
+void freeGroup(void* g){
+    groupdata* group=(groupdata*)g;
+    free(group->admin);
     icl_hash_destroy(group->users,free,NULL);
-} 
+}

@@ -3,7 +3,7 @@
  *
  * Dipartimento di Informatica Università di Pisa
  * Docenti: Prencipe, Torquati
- * 
+ *
  */
 /** @file connection.c
   * @author Francesco Pirrò 544539
@@ -45,14 +45,13 @@ int openConnection(char* path, unsigned int ntimes, unsigned int secs){
             printf("Connessione Fallita. Ritento \n");
             sleep(secs);
         }
-        
+
     }
     printf("Tentativi Massimi superati\n");
     return -1;
 }
 
 long openDispatcher(char* path){
-    int err=0;
     struct sockaddr_un addr;
     long sock_fd;
     createAddress(path,&addr);
@@ -63,7 +62,7 @@ long openDispatcher(char* path){
 }
 
 long acceptConnection(long sock_fd, char* path){
-    long new_sock=0;    
+    long new_sock=0;
     socklen_t len=sizeof(struct sockaddr_un);
     struct sockaddr_un addr;
     createAddress(path,&addr);
@@ -72,10 +71,9 @@ long acceptConnection(long sock_fd, char* path){
 }
 
 int readHeader(long connfd, message_hdr_t *hdr){
-    int byte_read=0;
     hdr=memset(hdr,0,sizeof(message_hdr_t));
     TRYREAD(read(connfd,hdr,sizeof(message_hdr_t)));
-    else return 0;
+    return 0;
 }
 
 int readData(long fd, message_data_t *data){

@@ -3,7 +3,7 @@
  *
  * Dipartimento di Informatica Università di Pisa
  * Docenti: Prencipe, Torquati
- * 
+ *
  */
 /** @file history.c
   * @author Francesco Pirrò 544539
@@ -11,36 +11,38 @@
 */
 
 #include <history.h>
+#include <config.h>
+#include <stdlib.h>
 
 
 #ifndef _history_c_
 #define _history_c_
 
 void initializeHistory(history** storia, int size){
-    int err=0;
     *storia=malloc(sizeof(history));
     MEMORYCHECK(*storia);
     (*storia)->data=malloc(size*sizeof(message_t*));
-    MEMORYCHEK((*storia)->data);
-    memset((*storia)->data,NULL,size*sizeof(char));
+    MEMORYCHECK((*storia)->data);
+    memset((*storia)->data,0,size*sizeof(char));
     (*storia)->pending=malloc(size*sizeof(int));
     MEMORYCHECK((*storia)->pending);
     memset((*storia)->pending,0,size*sizeof(int));
-    history->size=size;
-    history->first=0;
-    history->last=size-1;
-    return 0;
+    (*storia)->size=size;
+    (*storia)->first=0;
+    (*storia)->last=size-1;
+    (*storia)->nel=0;
 }
 
 int addMessage(history* storia, message_t* mex,int fd){
     if(mex==NULL || storia==NULL) return -1;
-    int i=(storia->last+1)%history->size;
+    int i=(storia->last+1)%storia->size;
     if(storia->data[i]!=NULL){
         free(storia->data[i]);
         storia->first=i+1;
     }
-    if(fd==-1) storia->pending[i]=1
-    else storia->pending[i]=0
+    if(storia->nel!=storia->size)++storia->nel;
+    if(fd==-1) storia->pending[i]=-1;
+    else storia->pending[i]=0;
     storia->data[i]=mex;
     storia->last=i;
     return 0;

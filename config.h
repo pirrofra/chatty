@@ -3,13 +3,15 @@
  *
  * Dipartimento di Informatica Università di Pisa
  * Docenti: Prencipe, Torquati
- * 
+ *
  */
 /**
  * @file config.h
  * @brief File contenente alcune define con valori massimi utilizzabili
  */
  #include <errno.h>
+ #include <stdio.h>
+
 
 #if !defined(CONFIG_H_)
 #define CONFIG_H_
@@ -23,13 +25,13 @@
 #define USERTABLEDIM 1024 //dimensione della tabella degli utenti registrati
 
 
-#define MEMORYCHECK(X) if(X==NULL){perror("Impossibile Allocare Memoria, Termino Processo"); exit(EXIT_FAILURE);}
-#define SYSCALLCHECK(X,ERR) if(errno=X){perror(ERR);return -1;}
-#define MUTEXLOCK(X) if(errno=pthread_mutex_lock(&(X))) perror("Mutex Lock"); else{
-#define MUTEXUNLOCK(X) if(errno=pthread_mutex_unlock(&(X))) perror("Mutex Unlock");} 
+#define MEMORYCHECK(X) if((X)==NULL){perror("Impossibile Allocare Memoria, Termino Processo"); exit(EXIT_FAILURE);}
+#define SYSCALLCHECK(X,ERR) if((errno=(X))){perror(ERR);return -1;}
+#define MUTEXLOCK(X) if((errno=pthread_mutex_lock(&(X)))) perror("Mutex Lock"); else{
+#define MUTEXUNLOCK(X) if((errno=pthread_mutex_unlock(&(X)))) perror("Mutex Unlock");}
 #define SOCKETCHECK(X) if((X)==-1){perror("Creazione Socket");return -1;}
-#define TRYWRITE(X) if((X)==-1){perror("Write");return -1};
-#define TRYREAD(X) if((X)==-1){perror("Read");return -1};
+#define TRYWRITE(X) if((X)==-1){perror("Write");return -1;};
+#define TRYREAD(X) if((X)==-1){perror("Read");return -1;};
 
 // to avoid warnings like "ISO C forbids an empty translation unit"
 typedef int make_iso_compilers_happy;

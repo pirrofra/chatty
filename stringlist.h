@@ -3,13 +3,14 @@
  *
  * Dipartimento di Informatica Università di Pisa
  * Docenti: Prencipe, Torquati
- * 
+ *
  */
 /** @file stringlist.h
   * @author Francesco Pirrò 544539
   * si dichiara che il contenuto di questo file è in ogni sua parte opera originale  dell'autore
 */
 
+#include<config.h>
 #ifndef _stringlist_h_
 #define _stringlist_h_
 
@@ -32,7 +33,7 @@ void initializeStringList(stringlist** strlst, int dim, int str_dim);
  * @function addString
  * @brief aggiunge la stringa alla lista
  * @param strlst stringlist a cui aggiungere
- * @param i posizione 
+ * @param i posizione
  * @param stringa stringa da aggiungere
  * @return 0 successo, -1 errore
 */

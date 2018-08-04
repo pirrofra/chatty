@@ -3,7 +3,7 @@
  *
  * Dipartimento di Informatica Università di Pisa
  * Docenti: Prencipe, Torquati
- * 
+ *
  */
 /** @file stats.h
   * @author Francesco Pirrò 544539
@@ -34,7 +34,7 @@ struct statistics {
  * @function initializeStats
  * @brief inizializza la struttura dati per le statistiche
  * @param stats puntatore alla struttura dati statistics da inizializzare
- * @return 0 successo, -1 errore da 
+ * @return 0 successo, -1 errore da
 */
 int initializeStats(struct statistics** stats);
 
@@ -101,14 +101,14 @@ void upderrors(struct statistics* stats, int n);
  *
  * @param fout descrittore del file aperto in append.
  *
- * @return 0 in caso di successo, -1 in caso di fallimento 
+ * @return 0 in caso di successo, -1 in caso di fallimento
  */
 static inline int printStats(FILE *fout) {
     extern struct statistics chattyStats;
 
     if (fprintf(fout, "%ld - %ld %ld %ld %ld %ld %ld %ld\n",
 		(unsigned long)time(NULL),
-		chattyStats.nusers, 
+		chattyStats.nusers,
 		chattyStats.nonline,
 		chattyStats.ndelivered,
 		chattyStats.nnotdelivered,

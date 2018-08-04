@@ -3,7 +3,7 @@
  *
  * Dipartimento di Informatica Università di Pisa
  * Docenti: Prencipe, Torquati
- * 
+ *
  */
 /** @file stringlist.c
   * @author Francesco Pirrò 544539
@@ -15,7 +15,7 @@
 #include <stdlib.h>
 
 void initializeStringList(stringlist** strlst, int dim, int str_dim){
-    if(dim<=0||str_dim<=0) *strlst=NULL;    
+    if(dim<=0||str_dim<=0) *strlst=NULL;
     else{
         (*strlst)=malloc(sizeof(stringlist));
         MEMORYCHECK(*strlst);
@@ -41,4 +41,3 @@ void freeStringList(stringlist* strlst){
         free(strlst);
     }
 }
-

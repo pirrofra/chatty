@@ -3,7 +3,7 @@
  *
  * Dipartimento di Informatica Università di Pisa
  * Docenti: Prencipe, Torquati
- * 
+ *
  */
 /** @file queue.c
   * @author Francesco Pirrò 544539
@@ -54,9 +54,8 @@ int enqueue(queue* coda, int fd){
 }
 
 int dequeue(queue*coda, int* fd){
-    int err=0;
     if(coda==NULL||fd<=0) return -1;
-    SYSCALLCHECK(pthread_mutex_lock(&(coda->lock),"Acquisizione del Mutex Lock");
+    SYSCALLCHECK(pthread_mutex_lock(&(coda->lock)),"Acquisizione del Mutex Lock");
     while(coda->nelem==0){
         SYSCALLCHECK(pthread_cond_wait(&(coda->empty),&(coda->lock)),"Wait su Variabile di Condizionamento");
     }

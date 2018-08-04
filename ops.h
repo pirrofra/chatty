@@ -3,7 +3,7 @@
  *
  * Dipartimento di Informatica Università di Pisa
  * Docenti: Prencipe, Torquati
- * 
+ *
  */
 
 #if !defined(OPS_H_)
@@ -24,7 +24,7 @@ typedef enum {
 
     CONNECT_OP       = 1,   /// richiesta di connessione di un client
     POSTTXT_OP       = 2,   /// richiesta di invio di un messaggio testuale ad un nickname o groupname
-    POSTTXTALL_OP    = 3,   /// richiesta di invio di un messaggio testuale a tutti gli utenti 
+    POSTTXTALL_OP    = 3,   /// richiesta di invio di un messaggio testuale a tutti gli utenti
     POSTFILE_OP      = 4,   /// richiesta di invio di un file ad un nickname o groupname
     GETFILE_OP       = 5,   /// richiesta di recupero di un file
     GETPREVMSGS_OP   = 6,   /// richiesta di recupero della history dei messaggi
@@ -36,19 +36,19 @@ typedef enum {
     CREATEGROUP_OP   = 10,  /// richiesta di creazione di un gruppo
     ADDGROUP_OP      = 11,  /// richiesta di aggiunta ad un gruppo
     DELGROUP_OP      = 12,  /// richiesta di rimozione da un gruppo
-
+    DELALLGROUP_OP = 13,
 
     /* NOTA: la richiesta di cancellazione di un gruppo e' lasciata come task opzionale */
 
-    /* 
-     * aggiungere qui eltre operazioni che si vogliono implementare 
+    /*
+     * aggiungere qui eltre operazioni che si vogliono implementare
      */
 
     /* ------------------------------------------ */
     /*    messaggi inviati dal server             */
     /* ------------------------------------------ */
 
-    OP_OK           = 20,  // operazione eseguita con successo    
+    OP_OK           = 20,  // operazione eseguita con successo
     TXT_MESSAGE     = 21,  // notifica di messaggio testuale
     FILE_MESSAGE    = 22,  // notifica di messaggio "file disponibile"
 
@@ -65,15 +65,17 @@ typedef enum {
     OP_USR_ALREADY_IN_GROUP = 35, //utente già nel gruppo
     OP_NO_PERMISSION = 36, //utente non ha il permesso di eseguire l'operazione
     OP_FILE_EXISTS =37, //il file che si sta tentando di mandare esiste già
-    
+    OP_NOT_EXISTS=38, //l'operazione richiesta non esiste
+    OP_FILE_TOOBIG=39, //file troppo grande
 
-    /* 
-     * aggiungere qui altri messaggi di ritorno che possono servire 
+
+    /*
+     * aggiungere qui altri messaggi di ritorno che possono servire
      */
 
     OP_END          = 100 // limite superiore agli id usati per le operazioni
 
 } op_t;
-    
+
 
 #endif /* OPS_H_ */

@@ -3,12 +3,12 @@
  *
  * Dipartimento di Informatica Università di Pisa
  * Docenti: Prencipe, Torquati
- * 
+ *
  */
 /** @file user.c
   * @author Francesco Pirrò 544539
   * si dichiara che il contenuto di questo file è in ogni sua parte opera originale  dell'autore
-*/  
+*/
 
 #include <user.h>
 #include <message.h>
@@ -36,7 +36,7 @@ unsigned int simpleHash(void* key){
 }
 
 int simpleCompare(void* a, void* b){
-    return *(int*) a - *(int*)b; 
+    return *(int*) a - *(int*)b;
 }
 
 int initializeManager(manager** usrmngr, int max_user, int dim_history){
@@ -50,9 +50,9 @@ int initializeManager(manager** usrmngr, int max_user, int dim_history){
     for(int i=0;i<NUMMUTEX;i++){
         SYSCALLCHECK(pthread_mutex_init(&((*usrmngr)->lockr[i]),NULL),"Inizializzazzione Mutex");
     }
-    
+
     SYSCALLCHECK(pthread_mutex_init(&((*usrmngr)->lockc),NULL),"Inizializzazzione Mutex");
-    
+
     for(int i=0;i<NUMMUTEX;i++){
         SYSCALLCHECK(pthread_mutex_init(&((*usrmngr)->lockg[i]),NULL),"Inizializzazzione Mutex");
     }
@@ -67,10 +67,13 @@ int initializeManager(manager** usrmngr, int max_user, int dim_history){
     return 0;
 }
 
-op_t registerUser(manager* usrmngr, char* nickname){
+op_t registerUser(manager* usrmngr, char* nickname,int fd){
     int err=0;
     int i=hash_pjw((void*) nickname)%NUMMUTEX;
     char* newnick;
+    char* newnick2;
+    int* key;
+    int tmp=0;
     op_t result=OP_FAIL;
     userdata* data;
     if(usrmngr==NULL||nickname==NULL) return OP_FAIL;
@@ -84,12 +87,32 @@ op_t registerUser(manager* usrmngr, char* nickname){
     err=icl_hash_insert(usrmngr->registred_user,newnick, data);
     if(err==-1)
         result=OP_FAIL;
-    else if(err==0||||groupexist(usrmngr,name))
+    else if(err==0||groupexist(usrmngr,nickname))
         result=OP_NICK_ALREADY;
     else{
-        data->fd=-1;
+        data->fd=fd;
         initializeHistory(&(data->user_history),usrmngr->history_size);
-        result=OP_OK;
+        MUTEXLOCK(usrmngr->lockc);
+        key=malloc(sizeof(int));
+        MEMORYCHECK(key);
+        *key=fd;
+        newnick2=malloc(sizeof(char)*(MAX_NAME_LENGTH+1));
+        MEMORYCHECK(newnick2);
+        memset(newnick,'\0',(MAX_NAME_LENGTH+1)*sizeof(char));
+        strncpy(newnick2,nickname,MAX_NAME_LENGTH*sizeof(char));
+        tmp=icl_hash_insert(usrmngr->connected_user,key,newnick2);
+        if(tmp==-1){
+                free(key);
+                free(newnick2);
+                result=OP_FAIL;
+            }
+       else if(tmp==0){
+                free(key);
+                free(newnick2);
+                result=OP_CLNT_ALREADY_CONNECTED;
+            }
+       else result=OP_OK;
+        MUTEXUNLOCK(usrmngr->lockc);
     }
     MUTEXUNLOCK(usrmngr->lockr[i]);
     if(result==OP_FAIL || result==OP_NICK_ALREADY){
@@ -99,12 +122,12 @@ op_t registerUser(manager* usrmngr, char* nickname){
     return result;
 }
 
-op_t connectUser(manager* usrmngr, char* nickname, int fd){ 
-    int err=0;   
+op_t connectUser(manager* usrmngr, char* nickname, int fd){
+    int err=0;
     int i=hash_pjw((void*) nickname)%NUMMUTEX;
     char* newnick;
     int* key;
-    op_t result;
+    op_t result=OP_FAIL;
     userdata* data;
     if(usrmngr==NULL||nickname==NULL||fd<=0) return OP_FAIL;
     MUTEXLOCK(usrmngr->lockr[i]);
@@ -122,7 +145,7 @@ op_t connectUser(manager* usrmngr, char* nickname, int fd){
         MEMORYCHECK(key);
         *key=fd;
         MUTEXLOCK(usrmngr->lockc);
-        
+
         if(usrmngr->max_connected_user>=(usrmngr->connected_user)->nentries) {
             result=OP_TOO_MANY_CLIENT;
             free(key);
@@ -170,7 +193,7 @@ op_t unregisterUser(manager* usrmngr, char* nickname){
                 kick(gdata,nickname);
             }
             MUTEXUNLOCK(usrmngr->lockg[h1]);
-    } 
+    }
     data=icl_hash_find(usrmngr->registred_user,nickname);
     if(data==NULL) result= OP_NICK_UNKNOWN;
     else{
@@ -221,7 +244,7 @@ int storeMessage(manager* usrmngr, char* nickname ,message_t* msg){
         tmp=addMessage(data->user_history, msg,data->fd);
         if(tmp==-1)
             result=-2;
-        else 
+        else
             result=data->fd;
     }
     MUTEXUNLOCK(usrmngr->lockr[i]);
@@ -257,7 +280,7 @@ op_t createGroup(manager* usrmngr, char* creator, char* name){
         MUTEXUNLOCK(usrmngr->lockg[h]);
     }
     else result=OP_NICK_ALREADY;
-    
+
     MUTEXUNLOCK(usrmngr->lockr[h]);
     if(result==OP_FAIL || result==OP_NICK_ALREADY){
         free(newname);
@@ -306,7 +329,7 @@ op_t deletefromGroup(manager* usrmngr, char*nickname, char* groupname){
     group=icl_hash_find(usrmngr->groups,groupname);
     if(group==NULL) result=OP_NICK_UNKNOWN;
     else if (!string_compare((void*)group->admin,(void*)nickname)){
-        result=deleteGroup(usrmngr,groupname,nickname);
+        result=deleteGroup(usrmngr,nickname,groupname);
     }
     else{
         tmp=kick(group,nickname);
@@ -318,7 +341,7 @@ op_t deletefromGroup(manager* usrmngr, char*nickname, char* groupname){
     return result;
 }
 
-op_t deleteGroup(manager* usrmngr, char* groupname,char*nickname){
+op_t deleteGroup(manager* usrmngr,char*nickname,char* groupname){
     groupdata* group;
     int tmp;
     op_t result=OP_FAIL;
@@ -385,7 +408,7 @@ stringlist* connectedUserList(manager* usrmngr){
         err=err||(addString(ret,p,dp));
         ++p;
     }
-    
+
     MUTEXUNLOCK(usrmngr->lockc);
     if(ret!=NULL&&err){
         freeStringList(ret);
@@ -419,7 +442,7 @@ stringlist* registredUserList(manager* usrmngr){
      if(ret!=NULL&&err){
         freeStringList(ret);
         ret=NULL;
-    }      
+    }
     return ret;
 }
 
@@ -437,10 +460,9 @@ int isingroup(manager* usrmngr, char* nickname,char* groupname){
     int result=0;
     groupdata* group;
     int i=hash_pjw((void*) groupname)%NUMMUTEX;
-    MUTEXUNLOCK(usrmngr->lockg[i]);
-    group=icl_hash_find(usrmngr->groups,groupname);
-    if(group && icl_hash_find(group->users, nickname) result=1;   
     MUTEXLOCK(usrmngr->lockg[i]);
+    group=icl_hash_find(usrmngr->groups,groupname);
+    if(group && icl_hash_find(group->users, nickname)) result=1;
+    MUTEXUNLOCK(usrmngr->lockg[i]);
     return result;
 }
-

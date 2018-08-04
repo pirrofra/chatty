@@ -3,7 +3,7 @@
  *
  * Dipartimento di Informatica Università di Pisa
  * Docenti: Prencipe, Torquati
- * 
+ *
  */
 /** @file user.h
   * @author Francesco Pirrò 544539
@@ -24,12 +24,10 @@
  * @struct userdata
  * @brief struttura per conservare informazioni utili sugli utenti.
  * @var user_history hisory dei messaggi collegati all'utente.
- * @var pendingmsg numero di messaggi che l'utente non ha ancora ricevuto;
  * @var  fd file descriptor del client connesso con quel nickname, se -1 utente disconnesso
 */
 typedef struct {
     history* user_history;
-    int pendingmsg
     int fd;
 } userdata;
 
@@ -44,7 +42,7 @@ typedef struct {
  * @var lockr array di mutex lock (uno per ogni bucket di registred_user)
  * @var lockc array di mutex lock (uno per ogni bucket di connected_user)
  * @var lockg array di mutex lock (uno per ogni bucket di groups)
- * 
+ *
 */
 typedef struct{
     icl_hash_t* registred_user;
@@ -66,16 +64,17 @@ typedef struct{
  * @return 0 operazione riuscita, -1 errore
 */
 int initializeManager(manager** usrmngr, int max_user, int dim_history);
- 
+
 
 /**
  * @function registerUser
  * @brief registra un nuovo utente
  * @param usrmngr puntatore al gestore degli utenti
  * @param nickname nickname dell'utente da registrare
+ * @param fd socke del client da associare
  * @return op_t esito operazione
 */
-op_t registerUser(manager* usrmngr, char* nickname);
+op_t registerUser(manager* usrmngr, char* nickname,int fd);
 
 /**
  * @function connectUser
@@ -95,7 +94,7 @@ op_t connectUser(manager* usrmngr, char* nickname, int fd);
  * @return op_t esito operazione
 */
 op_t unregisterUser(manager* usrmngr, char* nickname);
- 
+
 /**
  * @function disconnectUser
  * @brief disconnette utente  dal server
@@ -155,7 +154,7 @@ int storeMessagetoAll(manager* usrmngr, message_t* msg);
  * @function createGroup
  * @brief crea un nuovo gruppo
  * @param usrmngr puntantore al gestore degli utenti
- * @param creator nickname del creatore 
+ * @param creator nickname del creatore
  * @param name nome del gruppo
  * @return op_t esito operazione
 */
@@ -189,8 +188,8 @@ op_t deletefromGroup(manager* usrmngr, char*nickname, char* groupname);
  * @param groupname nome del gruppo da eliminare
  * @param nickname nickname dell'utente che richiede l'operazione
  * @return op_t esito dell'operazione
-*/ 
-op_t deleteGroup(manager* usrmngr, char* groupname,char* nickname);
+*/
+op_t deleteGroup(manager* usrmngr, char* nickname,char* groupname);
 
 /**
  * @function userGroupList
@@ -216,4 +215,9 @@ stringlist* registredUserList(manager* usrmngr);
  * @return lista degli utenti connessi
 */
 stringlist* connectedUserList(manager* usrmngr);
+
+
+int groupexist(manager* usrmngr, char* name);
+
+int isingroup(manager* usrmngr, char* nickname,char* groupname);
 #endif //_user_h_

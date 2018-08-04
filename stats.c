@@ -3,7 +3,7 @@
  *
  * Dipartimento di Informatica Università di Pisa
  * Docenti: Prencipe, Torquati
- * 
+ *
  */
 /** @file stats.c
   * @author Francesco Pirrò 544539
@@ -12,9 +12,10 @@
 
 #include <stats.h>
 #include <config.h>
+#include<stdlib.h>
 
 int initializeStats(struct statistics** stats){
-    (*stats)=malloc(sizeof(statistics));
+    (*stats)=malloc(sizeof(struct statistics));
     MEMORYCHECK(*stats);
     SYSCALLCHECK(pthread_mutex_init(&((*stats)->lock),NULL),"Inizializzazione Mutex Lock");
     (*stats)->nusers=0;
@@ -28,14 +29,14 @@ int initializeStats(struct statistics** stats){
 }
 
 
-void updusers(struct statistics** stats, int n){
+void updusers(struct statistics* stats, int n){
     MUTEXLOCK(stats->lock);
     stats->nusers += n;
     MUTEXUNLOCK(stats->lock);
 }
 
 
-void updonline(struct statistics** stats, int n){
+void updonline(struct statistics* stats, int n){
     MUTEXLOCK(stats->lock);
     stats->nonline += n;
     MUTEXUNLOCK(stats->lock);
@@ -43,7 +44,7 @@ void updonline(struct statistics** stats, int n){
 
 
 
-void updelivered(struct statistics** stats, int n){
+void updelivered(struct statistics* stats, int n){
     MUTEXLOCK(stats->lock);
     stats->ndelivered += n;
     MUTEXUNLOCK(stats->lock);
@@ -51,7 +52,7 @@ void updelivered(struct statistics** stats, int n){
 
 
 
-void updndelivered(struct statistics** stats, int n){
+void updndelivered(struct statistics* stats, int n){
     MUTEXLOCK(stats->lock);
     stats->nnotdelivered += n;
     MUTEXUNLOCK(stats->lock);
@@ -59,7 +60,7 @@ void updndelivered(struct statistics** stats, int n){
 
 
 
-void updfile(struct statistics** stats, int n){
+void updfile(struct statistics* stats, int n){
     MUTEXLOCK(stats->lock);
     stats->nfiledelivered += n;
     MUTEXUNLOCK(stats->lock);
@@ -67,7 +68,7 @@ void updfile(struct statistics** stats, int n){
 
 
 
-void updnfile(struct statistics** stats, int n){
+void updnfile(struct statistics* stats, int n){
     MUTEXLOCK(stats->lock);
     stats->nfilenotdelivered += n;
     MUTEXUNLOCK(stats->lock);
@@ -75,9 +76,8 @@ void updnfile(struct statistics** stats, int n){
 
 
 
-void upderrors(struct statistics** stats, int n){
+void upderrors(struct statistics* stats, int n){
     MUTEXLOCK(stats->lock);
     stats->nerrors += n;
     MUTEXUNLOCK(stats->lock);
 }
-
