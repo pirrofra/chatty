@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
     int dispatcher=0;
     fd_set localset;
     int err=0;
-    struct timeval time={0,10000};
+    struct timeval timeout={0,1000};
     if(argc!=3){
         usage(argv[0]);
         return -1;
@@ -101,7 +101,7 @@ int main(int argc, char *argv[]) {
         local_max=max_sock;
         SYSCALLCHECK(pthread_mutex_unlock(&fd_set_lock),"Mutex Lock");
         //select e gestione Coda
-        err=select(local_max+1,&localset,NULL,NULL,&time);
+        err=select(local_max+1,&localset,NULL,NULL,&timeout);
         if(err==-1){
             perror("Select");
             return -1;

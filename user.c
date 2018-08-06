@@ -123,7 +123,7 @@ op_t registerUser(manager* usrmngr, char* nickname,int fd){
 op_t connectUser(manager* usrmngr, char* nickname, int fd){
     int err=0;
     int i=hash_pjw((void*) nickname)%NUMMUTEX;
-    char* newnick=NULL;
+    char* newnick;
     int* key;
     op_t result=OP_FAIL;
     userdata* data;
