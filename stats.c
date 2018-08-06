@@ -14,17 +14,15 @@
 #include <config.h>
 #include<stdlib.h>
 
-int initializeStats(struct statistics** stats){
-    (*stats)=malloc(sizeof(struct statistics));
-    MEMORYCHECK(*stats);
-    SYSCALLCHECK(pthread_mutex_init(&((*stats)->lock),NULL),"Inizializzazione Mutex Lock");
-    (*stats)->nusers=0;
-    (*stats)->nonline=0;
-    (*stats)->ndelivered=0;
-    (*stats)->nnotdelivered=0;
-    (*stats)->nfiledelivered=0;
-    (*stats)->nfilenotdelivered=0;
-    (*stats)->nerrors=0;
+int initializeStats(struct statistics* stats){
+    SYSCALLCHECK(pthread_mutex_init(&((stats)->lock),NULL),"Inizializzazione Mutex Lock");
+    (stats)->nusers=0;
+    (stats)->nonline=0;
+    (stats)->ndelivered=0;
+    (stats)->nnotdelivered=0;
+    (stats)->nfiledelivered=0;
+    (stats)->nfilenotdelivered=0;
+    (stats)->nerrors=0;
     return 0;
 }
 
@@ -80,4 +78,9 @@ void upderrors(struct statistics* stats, int n){
     MUTEXLOCK(stats->lock);
     stats->nerrors += n;
     MUTEXUNLOCK(stats->lock);
+}
+
+void destroystats(struct statistics* stats){
+    if((errno=pthread_mutex_lock(&stats->lock))) perror("Cancellamento Mutex");
+    if((errno=pthread_mutex_destroy(&stats->lock))) perror("Cancellamento Mutex");
 }

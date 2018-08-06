@@ -3,7 +3,7 @@
  *
  * Dipartimento di Informatica Università di Pisa
  * Docenti: Prencipe, Torquati
- * 
+ *
  */
 /** @file queue.h
   * @author Francesco Pirrò 544539
@@ -43,7 +43,7 @@ typedef struct{
  * @param size dimensione della coda
  * @return 0 successo, -1 errore
 */
-int initializeQueue(queue** coda,int size);
+int initializeQueue(queue* coda,int size);
 
 /**
  * @function enqueue
@@ -69,6 +69,6 @@ int dequeue(queue* coda, int* fd);
  * @param coda puntatore alla coda da liberare
  * @return 0 successo, -1 errore
 */
-int freeQueue(queue* coda);
+void freeQueue(queue* coda);
 
 #endif //_queue_h_

@@ -37,7 +37,7 @@ int register_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,
         upderrors(chattystats,1);
     }
 
-    if(sendRequest(fd,&reply)==-1) err=-1;
+    if(sendRequest(fd,&reply)<=0) err=-1;
     if(result==OP_OK) freeStringList(users);
     return err;
 }
@@ -60,7 +60,7 @@ int connect_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,s
         upderrors(chattystats,1);
     }
 
-    if(sendRequest(fd,&reply)==-1) err=-1;
+    if(sendRequest(fd,&reply)<=0) err=-1;
     if(result==OP_OK) freeStringList(users);
     return err;
 }
@@ -102,11 +102,17 @@ op_t notifymex(int fd, message_t msg, manager* usrmngr,configs* configurazione,s
             upderrors(chattystats,1);
         }
         else if(fd_receiver>-1){
-            if(sendRequest(fd_receiver,&msg)==-1) printf("Errore Comunicazione");
+            if(sendRequest(fd_receiver,&msg)<=0) printf("Errore Comunicazione");
             if(msg.hdr.op==TXT_MESSAGE) updelivered(chattystats,1);
         }
-        else if(msg.hdr.op==TXT_MESSAGE) updndelivered(chattystats,1);
-        if(msg.hdr.op==FILE_MESSAGE) updnfile(chattystats,1);
+        else if(msg.hdr.op==TXT_MESSAGE) {
+            updndelivered(chattystats,1);
+            result=OP_OK;
+        }
+        if(msg.hdr.op==FILE_MESSAGE) {
+            updnfile(chattystats,1);
+            result=OP_OK;
+        }
     }
     else if(isingroup(usrmngr,msg.data.hdr.receiver,msg.hdr.sender)){
         char* tmp;
@@ -118,7 +124,7 @@ op_t notifymex(int fd, message_t msg, manager* usrmngr,configs* configurazione,s
             if(msg.hdr.op==FILE_MESSAGE)updnfile(chattystats,1);
             if(fd_receiver==-1 && msg.hdr.op==TXT_MESSAGE) updndelivered(chattystats,1);
             else if(fd_receiver>-1){
-                if(sendRequest(fd_receiver,&msg)==-1) printf("Errore Comunicazione");
+                if(sendRequest(fd_receiver,&msg)<=0) printf("Errore Comunicazione");
                 if(msg.hdr.op==TXT_MESSAGE)updelivered(chattystats,1);
             }
             else{
@@ -144,7 +150,7 @@ int posttxt_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,s
     result=notifymex(fd,msg,usrmngr,configurazione,chattystats);
     setHeader(&(reply.hdr),result,"");
     setData(&(reply.data),"",NULL,0);
-    if(sendRequest(fd,&reply)==-1) err=-1;
+    if(sendRequest(fd,&reply)<=0) err=-1;
     return err;
 }
 
@@ -166,7 +172,7 @@ int posttextall_op(int fd, message_t msg, manager* usrmngr,configs* configurazio
             fd_receiver=storeMessage(usrmngr,tmp,notify);
             if(fd_receiver==-1) updndelivered(chattystats,1);
             else if(fd_receiver>-1){
-                if(sendRequest(fd_receiver,&msg)==-1) err=-1;
+                if(sendRequest(fd_receiver,&msg)<=0) err=-1;
                 updelivered(chattystats,1);
             }
             else{
@@ -178,7 +184,7 @@ int posttextall_op(int fd, message_t msg, manager* usrmngr,configs* configurazio
     }
     setHeader(&(reply.hdr),result,"");
     setData(&(reply.data),"",NULL,0);
-    if(sendRequest(fd,&reply)==-1) err=-1;
+    if(sendRequest(fd,&reply)<=0) err=-1;
     return err;
 }
 
@@ -239,7 +245,7 @@ int postfile_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,
     setHeader(&(reply.hdr),result,"");
     setData(&(reply.data),"",NULL,0);
 
-    if(sendRequest(fd,&reply)==-1) err=-1;
+    if(sendRequest(fd,&reply)<=0) err=-1;
     return err;
 }
 
@@ -274,22 +280,25 @@ int getprevmsgs_op(int fd, message_t msg, manager* usrmngr,configs* configurazio
     int i=hash_pjw((void*) (msg.hdr).sender)%NUMMUTEX;
     MUTEXLOCK(usrmngr->lockr[i]);
     user=icl_hash_find(usrmngr->registred_user,(msg.hdr).sender);
-    if(!user){
+    if(user){
         int j=(user->user_history)->first;
         int el=0;
         result=OP_OK;
         setHeader(&(reply.hdr),result,"");
         setData(&(reply.data),"", (char*)&(user->user_history)->nel,sizeof(size_t));
-        if(sendRequest(fd,&reply)==-1) err=-1;
+        if(sendRequest(fd,&reply)<=0) err=-1;
         while(el<(user->user_history)->nel){
-            if(sendRequest(fd,(user->user_history)->data[j])==-1){
+            if(sendRequest(fd,(user->user_history)->data[j])<=0){
                 result=OP_FAIL;
                 el=-1;
             }
             else{
                 if(((user->user_history)->data[j])->hdr.op==TXT_MESSAGE){
                     updelivered(chattystats,1);
-                    updndelivered(chattystats,(user->user_history)->pending[j]);
+                    if((user->user_history)->pending[j]==1){
+                        updndelivered(chattystats,1);
+                        (user->user_history)->pending[j]=0;
+                    }
                 }
                 ++el;
                 j=(j+1)%(user->user_history)->size;
@@ -302,7 +311,7 @@ int getprevmsgs_op(int fd, message_t msg, manager* usrmngr,configs* configurazio
         upderrors(chattystats,1);
         setHeader(&(reply.hdr),result,"");
         setData(&(reply.data),"",NULL,0);
-        if(sendRequest(fd,&reply)==-1) err=-1;
+        if(sendRequest(fd,&reply)<=0) err=-1;
     }
     return err;
 }
@@ -324,7 +333,7 @@ int usrlist_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,s
         upderrors(chattystats,1);
     }
     setHeader(&(reply.hdr),result,"");
-    if(sendRequest(fd,&reply)==-1) err=-1;
+    if(sendRequest(fd,&reply)<=1) err=-1;
     return err;
 }
 
@@ -361,7 +370,7 @@ int creategroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazio
     if(result!=OP_OK) upderrors(chattystats,1);
     setHeader(&(reply.hdr),result,"");
     setData(&(reply.data),"",NULL,0);
-    if(sendRequest(fd,&reply)==-1) err=-1;
+    if(sendRequest(fd,&reply)<=0) err=-1;
     return err;
 }
 
@@ -373,7 +382,7 @@ int addgroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,
     if(result!=OP_OK) upderrors(chattystats,1);
     setHeader(&(reply.hdr),result,"");
     setData(&(reply.data),"",NULL,0);
-    if(sendRequest(fd,&reply)==-1) err=-1;
+    if(sendRequest(fd,&reply)<=0) err=-1;
     return err;
 }
 
@@ -385,7 +394,7 @@ int delfromgroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazi
     if(result!=OP_OK) upderrors(chattystats,1);
     setHeader(&(reply.hdr),result,"");
     setData(&(reply.data),"",NULL,0);
-    if(sendRequest(fd,&reply)==-1) err=-1;
+    if(sendRequest(fd,&reply)<=0) err=-1;
     return err;
 }
 
@@ -397,7 +406,7 @@ int delgroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,
     if(result!=OP_OK) upderrors(chattystats,1);
     setHeader(&(reply.hdr),result,"");
     setData(&(reply.data),"",NULL,0);
-    if(sendRequest(fd,&reply)==-1) err=-1;
+    if(sendRequest(fd,&reply)<=0) err=-1;
     return err;
 }
 
@@ -405,8 +414,10 @@ int execute(int fd, manager* usrmngr, configs* configurazione,struct statistics*
     int err=0;
     message_t msg;
     message_t reply_err;
-    if(readMsg(fd,&msg)==-1)
+    if(readMsg(fd,&msg)<=0){
+        msg.hdr.op=OP_FAIL;
          err=-1;
+    }
     else{
         switch(msg.hdr.op){
             case REGISTER_OP: err=register_op(fd,msg,usrmngr,configurazione,chattystats);
@@ -440,14 +451,16 @@ int execute(int fd, manager* usrmngr, configs* configurazione,struct statistics*
             default:
                 setHeader(&(reply_err.hdr),OP_NOT_EXISTS,"");
                 setData(&(reply_err.data),"",NULL,0);
-                if(sendRequest(fd,&reply_err)==-1) err=-1;
+                if(sendRequest(fd,&reply_err)<=0) err=-1;
                 upderrors(chattystats,1);
 
         }
+        free(msg.data.buf);
     }
-    if(msg.hdr.op!=UNREGISTER_OP && msg.hdr.op!=DISCONNECT_OP && err== -1){
-        disconnectUser(usrmngr,fd);
-        updonline(chattystats,-1);
+    if(msg.hdr.op==UNREGISTER_OP || msg.hdr.op==DISCONNECT_OP) return -1;
+    if(err== -1){
+        if(disconnectUser(usrmngr,fd)==OP_OK)
+            updonline(chattystats,-1);
     }
 
     return err;

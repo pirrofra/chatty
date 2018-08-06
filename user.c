@@ -36,34 +36,32 @@ unsigned int simpleHash(void* key){
 }
 
 int simpleCompare(void* a, void* b){
-    return *(int*) a - *(int*)b;
+    return *(int*) a == *(int*)b;
 }
 
-int initializeManager(manager** usrmngr, int max_user, int dim_history){
+int initializeManager(manager* usrmngr, int max_user, int dim_history){
     if(max_user<=0||dim_history<=0) return -1;
-    *usrmngr=malloc(sizeof(manager));
-    MEMORYCHECK(*usrmngr);
-    (*usrmngr)->lockr=calloc(NUMMUTEX,sizeof(pthread_mutex_t));
-    MEMORYCHECK((*usrmngr)->lockr);
-    (*usrmngr)->lockg=calloc(NUMMUTEX, sizeof(pthread_mutex_t));
-    MEMORYCHECK((*usrmngr)->lockg);
+    (usrmngr)->lockr=calloc(NUMMUTEX,sizeof(pthread_mutex_t));
+    MEMORYCHECK((usrmngr)->lockr);
+    (usrmngr)->lockg=calloc(NUMMUTEX, sizeof(pthread_mutex_t));
+    MEMORYCHECK((usrmngr)->lockg);
     for(int i=0;i<NUMMUTEX;i++){
-        SYSCALLCHECK(pthread_mutex_init(&((*usrmngr)->lockr[i]),NULL),"Inizializzazzione Mutex");
+        SYSCALLCHECK(pthread_mutex_init(&((usrmngr)->lockr[i]),NULL),"Inizializzazzione Mutex");
     }
 
-    SYSCALLCHECK(pthread_mutex_init(&((*usrmngr)->lockc),NULL),"Inizializzazzione Mutex");
+    SYSCALLCHECK(pthread_mutex_init(&((usrmngr)->lockc),NULL),"Inizializzazzione Mutex");
 
     for(int i=0;i<NUMMUTEX;i++){
-        SYSCALLCHECK(pthread_mutex_init(&((*usrmngr)->lockg[i]),NULL),"Inizializzazzione Mutex");
+        SYSCALLCHECK(pthread_mutex_init(&((usrmngr)->lockg[i]),NULL),"Inizializzazzione Mutex");
     }
-    (*usrmngr)->max_connected_user=max_user;
-    (*usrmngr)->history_size=dim_history;
-    (*usrmngr)->registred_user=icl_hash_create(USERTABLEDIM,hash_pjw,string_compare);
-    MEMORYCHECK((*usrmngr)->registred_user);
-    (*usrmngr)->connected_user=icl_hash_create(max_user,simpleHash, simpleCompare);
-    MEMORYCHECK((*usrmngr)->connected_user);
-    (*usrmngr)->groups=icl_hash_create(GTABLEDIM,hash_pjw,string_compare);
-    MEMORYCHECK((*usrmngr)->groups);
+    (usrmngr)->max_connected_user=max_user;
+    (usrmngr)->history_size=dim_history;
+    (usrmngr)->registred_user=icl_hash_create(USERTABLEDIM,hash_pjw,string_compare);
+    MEMORYCHECK((usrmngr)->registred_user);
+    (usrmngr)->connected_user=icl_hash_create(max_user,simpleHash, simpleCompare);
+    MEMORYCHECK((usrmngr)->connected_user);
+    (usrmngr)->groups=icl_hash_create(GTABLEDIM,hash_pjw,string_compare);
+    MEMORYCHECK((usrmngr)->groups);
     return 0;
 }
 
@@ -98,7 +96,7 @@ op_t registerUser(manager* usrmngr, char* nickname,int fd){
         *key=fd;
         newnick2=malloc(sizeof(char)*(MAX_NAME_LENGTH+1));
         MEMORYCHECK(newnick2);
-        memset(newnick,'\0',(MAX_NAME_LENGTH+1)*sizeof(char));
+        memset(newnick2,'\0',(MAX_NAME_LENGTH+1)*sizeof(char));
         strncpy(newnick2,nickname,MAX_NAME_LENGTH*sizeof(char));
         tmp=icl_hash_insert(usrmngr->connected_user,key,newnick2);
         if(tmp==-1){
@@ -125,11 +123,12 @@ op_t registerUser(manager* usrmngr, char* nickname,int fd){
 op_t connectUser(manager* usrmngr, char* nickname, int fd){
     int err=0;
     int i=hash_pjw((void*) nickname)%NUMMUTEX;
+    printf("Mutex n%d\n",i);
     char* newnick;
     int* key;
     op_t result=OP_FAIL;
     userdata* data;
-    if(usrmngr==NULL||nickname==NULL||fd<=0) return OP_FAIL;
+    if(usrmngr==NULL||nickname==NULL||fd<0) return OP_FAIL;
     MUTEXLOCK(usrmngr->lockr[i]);
     data=icl_hash_find(usrmngr->registred_user, nickname);
     if(data==NULL)
@@ -212,7 +211,7 @@ op_t disconnectUser(manager* usrmngr, int fd){
     userdata* data;
     char* name;
     op_t result;
-    if(usrmngr==NULL||fd<=0) return OP_FAIL;
+    if(usrmngr==NULL||fd<0) return OP_FAIL;
     MUTEXLOCK(usrmngr->lockc);
     name=icl_hash_find(usrmngr->connected_user,&(fd));
     tmp=icl_hash_delete(usrmngr->connected_user,&(fd),free,NULL);
@@ -465,4 +464,20 @@ int isingroup(manager* usrmngr, char* nickname,char* groupname){
     if(group && icl_hash_find(group->users, nickname)) result=1;
     MUTEXUNLOCK(usrmngr->lockg[i]);
     return result;
+}
+void destroy(manager* usrmngr){
+    icl_hash_destroy(usrmngr->registred_user, free,freeunregisterUser);
+    icl_hash_destroy(usrmngr->connected_user, NULL,free);
+    icl_hash_destroy(usrmngr->groups,free,freeGroup);
+    for(int i=0;i<NUMMUTEX;i++){
+        if((errno=pthread_mutex_lock(&usrmngr->lockr[i]))) perror("Acquisizione Mutex");
+        if((errno=pthread_mutex_destroy(&usrmngr->lockr[i]))) perror("Cancellamento Mutex");
+    }
+    free(usrmngr->lockr);
+    for(int i=0;i<NUMMUTEX;i++){
+        if((errno=pthread_mutex_lock(&usrmngr->lockr[i]))) perror("Cancellamento Mutex");
+        if((errno=pthread_mutex_destroy(&usrmngr->lockg[i]))) perror("Cancellamento Mutex");
+    }
+    free(usrmngr->lockg);
+    if((errno=pthread_mutex_destroy(&usrmngr->lockc))) perror("Cancellamento Mutex");
 }

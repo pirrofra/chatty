@@ -36,7 +36,7 @@ struct statistics {
  * @param stats puntatore alla struttura dati statistics da inizializzare
  * @return 0 successo, -1 errore da
 */
-int initializeStats(struct statistics** stats);
+int initializeStats(struct statistics* stats);
 
 /**
  * @function updusers
@@ -94,6 +94,7 @@ void updnfile(struct statistics* stats, int n);
 */
 void upderrors(struct statistics* stats, int n);
 
+void destroystats(struct statistics* stats);
 
 /**
  * @function printStats

@@ -1,6 +1,6 @@
 #
-# chatterbox Progetto del corso di LSO 2017/2018 
-# 
+# chatterbox Progetto del corso di LSO 2017/2018
+#
 # Dipartimento di Informatica Università di Pisa
 # Docenti: Prencipe, Torquati
 #
@@ -8,30 +8,33 @@
 
 ##########################################################
 # IMPORTANTE: completare la lista dei file da consegnare
-# 
+#
 FILE_DA_CONSEGNARE=Makefile chatty.c message.h ops.h stats.h config.h \
-		   DATA/chatty.conf1 DATA/chatty.conf2 connections.h 
+			fileconfig.h groupdata.h history.h icl_hash.h queue.h requestexec.h stringlist.h user.h \
+			connections.c fileconfig.c groupdata.c history.c icl_hash.c queue.c requestexec.c\
+			stats.c stringlist.c user.c\
+		   DATA/chatty.conf1 DATA/chatty.conf2 connections.h
 # inserire il nome del tarball: es. NinoBixio
-TARNAME=NomeCognome
+TARNAME=FrancescoPirro
 # inserire il corso di appartenenza: CorsoA oppure CorsoB
-CORSO=CorsoX
+CORSO=CorsoB
 #
 # inserire l'email sulla quale ricevere comunicazione sul progetto
 # e per sostenere l'esame
-MAIL=Email
+MAIL=pirro.francesco@gmail.com
 #
 ###########################################################
 
 ###################################################################
-# NOTA: Il nome riportato in UNIX_PATH deve corrispondere al nome 
-#       usato per l'opzione UnixPath nel file di configurazione del 
+# NOTA: Il nome riportato in UNIX_PATH deve corrispondere al nome
+#       usato per l'opzione UnixPath nel file di configurazione del
 #       server (vedere i file nella directory DATA).
 #       Lo stesso vale per il nome riportato in STAT_PATH e DIR_PATH
-#       che deveno corrispondere con l'opzione StatFileName e 
+#       che deveno corrispondere con l'opzione StatFileName e
 #       DirName, rispettivamente.
 #
-# ATTENZIONE: se il codice viene sviluppato sulle macchine del 
-#             laboratorio utilizzare come nomi, nomi unici, 
+# ATTENZIONE: se il codice viene sviluppato sulle macchine del
+#             laboratorio utilizzare come nomi, nomi unici,
 #             ad esempo /tmp/chatty_sock_<numero-di-matricola> e
 #             /tmp/chatty_stats_<numero-di-matricola>.
 #
@@ -42,11 +45,11 @@ DIR_PATH        = /tmp/chatty
 
 CC		=  gcc
 AR              =  ar
-CFLAGS	        += -std=c99 -Wall -pedantic -g -DMAKE_VALGRIND_HAPPY
+CFLAGS	        += -std=c99 -Wall -pedantic -g -DMAKE_VALGRIND_HAPPY -I$PWD
 ARFLAGS         =  rvs
 INCLUDES	= -I.
 LDFLAGS 	= -L.
-OPTFLAGS	= #-O3 
+OPTFLAGS	= #-O3
 LIBS            = -pthread
 
 # aggiungere qui altri targets se necessario
@@ -55,14 +58,31 @@ TARGETS		= chatty        \
 
 
 # aggiungere qui i file oggetto da compilare
-OBJECTS		= 
+OBJECTS		= connections.o \
+			fileconfig.o \
+			groupdata.o \
+			history.o \
+			icl_hash.o \
+			queue.o \
+			requestexec.o \
+			stats.o \
+			stringlist.o \
+			user.o
 
-# aggiungere qui gli altri include 
+# aggiungere qui gli altri include
 INCLUDE_FILES   = connections.h \
 		  message.h     \
 		  ops.h	  	\
 		  stats.h       \
-		  config.h
+		  config.h \
+		  fileconfig.h \
+		  groupdata.h \
+		  history.h \
+		  icl_hash.h \
+		  queue.h \
+		  requestexec.h \
+		  stringlist.h \
+		  user.h
 
 
 
@@ -70,7 +90,7 @@ INCLUDE_FILES   = connections.h \
 .SUFFIXES: .c .h
 
 %: %.c
-	$(CC) $(CFLAGS) $(INCLUDES) $(OPTFLAGS) -o $@ $< $(LDFLAGS) 
+	$(CC) $(CFLAGS) $(INCLUDES) $(OPTFLAGS) -o $@ $< $(LDFLAGS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(INCLUDES) $(OPTFLAGS) -c -o $@ $<
@@ -89,7 +109,7 @@ client: client.o connections.o message.h
 libchatty.a: $(OBJECTS)
 	$(AR) $(ARFLAGS) $@ $^
 
-clean		: 
+clean		:
 	rm -f $(TARGETS)
 
 cleanall	: clean
@@ -100,7 +120,7 @@ killchatty:
 	killall -9 chatty
 
 # test base
-test1: 
+test1:
 	make cleanall
 	\mkdir -p $(DIR_PATH)
 	make all
@@ -116,7 +136,7 @@ test1:
 	killall -QUIT -w chatty
 	@echo "********** Test1 superato!"
 
-# test scambio file 
+# test scambio file
 test2:
 	make cleanall
 	\mkdir -p $(DIR_PATH)
@@ -137,7 +157,7 @@ test3:
 	@echo "********** Test3 superato!"
 
 
-# verifica di memory leaks 
+# verifica di memory leaks
 test4:
 	make cleanall
 	\mkdir -p $(DIR_PATH)
@@ -167,8 +187,8 @@ consegna:
 	sleep 3
 	make test5
 	sleep 3
-	tar -cvf $(TARNAME)_$(CORSO)_chatty.tar $(FILE_DA_CONSEGNARE) 
+	tar -cvf $(TARNAME)_$(CORSO)_chatty.tar $(FILE_DA_CONSEGNARE)
 	@echo "*** TAR PRONTO $(TARNAME)_$(CORSO)_chatty.tar "
 	@echo "Per la consegna seguire le istruzioni specificate nella pagina del progetto:"
 	@echo " http://didawiki.di.unipi.it/doku.php/informatica/sol/laboratorio17/progetto"
-	@echo 
+	@echo

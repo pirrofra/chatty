@@ -26,7 +26,6 @@ void createAddress(char* path, struct sockaddr_un* addr){
 }
 
 int openConnection(char* path, unsigned int ntimes, unsigned int secs){
-    int err=0;
     struct sockaddr_un addr;
     int sock_fd;
     if(ntimes>MAX_RETRIES){
@@ -39,10 +38,11 @@ int openConnection(char* path, unsigned int ntimes, unsigned int secs){
     }
     SOCKETCHECK(sock_fd=socket(AF_UNIX,SOCK_STREAM,0));
     createAddress(path, &addr);
-    while((err=connect(sock_fd, (const struct sockaddr *)&addr, sizeof(struct sockaddr_un))) && ntimes<=0){
-        if(err==0) return sock_fd;
+    while(ntimes>0){
+        if(connect(sock_fd, (const struct sockaddr *)&addr, sizeof(struct sockaddr_un))==0) return sock_fd;
         else{
             printf("Connessione Fallita. Ritento \n");
+            --ntimes;
             sleep(secs);
         }
 
@@ -73,7 +73,7 @@ long acceptConnection(long sock_fd, char* path){
 int readHeader(long connfd, message_hdr_t *hdr){
     hdr=memset(hdr,0,sizeof(message_hdr_t));
     TRYREAD(read(connfd,hdr,sizeof(message_hdr_t)));
-    return 0;
+    return 1;
 }
 
 int readData(long fd, message_data_t *data){
@@ -83,29 +83,36 @@ int readData(long fd, message_data_t *data){
     data=memset(data,0,sizeof(message_data_t));
     TRYREAD(read(fd,&(data->hdr),sizeof(message_data_hdr_t)));
     len=data->hdr.len;
-    position=data->buf;
     if(len==0) data->buf=NULL;
     else {
-        data->buf=calloc(len,sizeof(char));
+        data->buf=malloc(len*sizeof(char));
         MEMORYCHECK(data->buf);
-    }
-    while(len>0){
-        byte_read=read(fd,position, data->hdr.len);
-        if(byte_read<0) {
-            perror("Read");
-            free(data->buf);
-            return -1;
+        memset(data->buf,'\0',len*sizeof(char));
+        position=data->buf;
+        while(len>0){
+            byte_read=read(fd,position, len*sizeof(char));
+            if(byte_read<0) {
+                perror("Read Buffer");
+                free(data->buf);
+                return -1;
+            }
+            if(byte_read==0){
+                free(data->buf);
+                return 0;
+            }
+            len-=byte_read;
+            position+=byte_read+1;
         }
-        len-=byte_read;
-        position+=byte_read;
     }
-    return 0;
+
+    return 1;
 }
 
 int readMsg(long fd, message_t *msg){
     int err=0;
     err=readHeader(fd, &(msg->hdr));
     if(err==-1) return -1;
+    if(err==0) return 0;
     err=readData(fd, &(msg->data));
     return err;
 }
@@ -117,12 +124,12 @@ int sendData(long fd, message_data_t *msg){
     TRYWRITE(write(fd,&(msg->hdr),sizeof(message_data_hdr_t)));
     len=msg->hdr.len;
     position=msg->buf;
-    while(len<0){
-        TRYWRITE(byte_wrote=write(fd,&(msg->buf),len));
+    while(len>0){
+        TRYWRITE(byte_wrote=write(fd,position,len));
         len-=byte_wrote;
-        position+=byte_wrote;
+        position+=byte_wrote+1;
     }
-    return 0;
+    return 1;
 }
 
 int sendRequest(long fd, message_t *msg){

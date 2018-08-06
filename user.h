@@ -63,7 +63,7 @@ typedef struct{
  * @param dim_history numero massimo di messaggi salvabili
  * @return 0 operazione riuscita, -1 errore
 */
-int initializeManager(manager** usrmngr, int max_user, int dim_history);
+int initializeManager(manager* usrmngr, int max_user, int dim_history);
 
 
 /**
@@ -104,8 +104,6 @@ op_t unregisterUser(manager* usrmngr, char* nickname);
 */
 op_t disconnectUser(manager* usrmngr, int fd);
 
-
-
 /**
  * @function freeunregisterUser
  * @brief funzione che libera lo spazio occupato da data
@@ -141,16 +139,6 @@ int simpleCompare(void* a, void* b);
 int storeMessage(manager* usrmngr, char* nickname ,message_t* msg);
 
 /**
- * @function storeMessagetoAll
- * @brief conserva il messaggio per tutti gli utenti
- * @param usrmngr puntatore al gestore degli utenti
- * @param msg messaggio da mandare
- * @return 0 successo, altr. errore
-*/
-int storeMessagetoAll(manager* usrmngr, message_t* msg);
-
-
-/**
  * @function createGroup
  * @brief crea un nuovo gruppo
  * @param usrmngr puntantore al gestore degli utenti
@@ -159,7 +147,6 @@ int storeMessagetoAll(manager* usrmngr, message_t* msg);
  * @return op_t esito operazione
 */
 op_t createGroup(manager* usrmngr, char* creator, char* name);
-
 
 /**
  * @function addtoGroup
@@ -220,4 +207,7 @@ stringlist* connectedUserList(manager* usrmngr);
 int groupexist(manager* usrmngr, char* name);
 
 int isingroup(manager* usrmngr, char* nickname,char* groupname);
+
+void destroy(manager* usrmngr);
+
 #endif //_user_h_

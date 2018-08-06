@@ -20,26 +20,23 @@
 #ifndef _queue_c_
 #define _queue_c_
 
-int initializeQueue(queue** coda, int size){
-    int err=0;
-    *coda=malloc(sizeof(queue));
-    MEMORYCHECK(*coda);
-    (*coda)->Table=calloc(size,sizeof(int));
-    MEMORYCHECK((*coda)->Table);
-    (*coda)->size=size;
-    (*coda)->first=0;
-    (*coda)->last=size-1;
-    (*coda)->nelem=0;
-    SYSCALLCHECK(pthread_mutex_init(&((*coda)->lock),NULL),"Inizializzazione Mutex Lock");
-    SYSCALLCHECK(pthread_cond_init(&((*coda)->full),NULL),"Inizializzazione Variabile di Condizionamento");
-    SYSCALLCHECK(err=pthread_cond_init(&((*coda)->empty),NULL),"Inizializzazione Variabile di Condizionamento");
+int initializeQueue(queue* coda, int size){
+    (coda)->Table=calloc(size,sizeof(int));
+    MEMORYCHECK((coda)->Table);
+    (coda)->size=size;
+    (coda)->first=0;
+    (coda)->last=size-1;
+    (coda)->nelem=0;
+    SYSCALLCHECK(pthread_mutex_init(&((coda)->lock),NULL),"Inizializzazione Mutex Lock");
+    SYSCALLCHECK(pthread_cond_init(&((coda)->full),NULL),"Inizializzazione Variabile di Condizionamento");
+    SYSCALLCHECK(pthread_cond_init(&((coda)->empty),NULL),"Inizializzazione Variabile di Condizionamento");
     return 0;
 
 }
 
 int enqueue(queue* coda, int fd){
     int i=0;
-    if(coda==NULL||fd<=0) return -1;
+    if(coda==NULL||fd<0) return -1;
     SYSCALLCHECK(pthread_mutex_lock(&(coda->lock)), "Mutex Lock");
     while(coda->nelem==coda->size){
         SYSCALLCHECK(pthread_cond_wait(&(coda->full),&(coda->lock)),"Wait su V.C.");
@@ -54,7 +51,7 @@ int enqueue(queue* coda, int fd){
 }
 
 int dequeue(queue*coda, int* fd){
-    if(coda==NULL||fd<=0) return -1;
+    if(coda==NULL) return -1;
     SYSCALLCHECK(pthread_mutex_lock(&(coda->lock)),"Acquisizione del Mutex Lock");
     while(coda->nelem==0){
         SYSCALLCHECK(pthread_cond_wait(&(coda->empty),&(coda->lock)),"Wait su Variabile di Condizionamento");
@@ -67,14 +64,14 @@ int dequeue(queue*coda, int* fd){
     return 0;
 }
 
-int freeQueue(queue* coda){
-    if(coda==NULL) return -1;
+void freeQueue(queue* coda){
+    if(coda!=NULL){
     free(coda->Table);
-    SYSCALLCHECK(pthread_mutex_destroy(&(coda->lock)),"Cancellazione del Mutex Lock");
-    SYSCALLCHECK(pthread_cond_destroy(&(coda->empty)), "Cancellazione della Variabile di Condizionamento");
-    SYSCALLCHECK(pthread_cond_destroy(&(coda->full)), "Cancellazione della Variabile di Condizionamento");
-    free(coda);
-    return 0;
+    if((errno=pthread_mutex_lock(&(coda->lock)))) perror("Mutex Lock");
+    if((errno=pthread_mutex_destroy(&(coda->lock)))) perror("Cancellazione del Mutex Lock");
+    if((errno=pthread_cond_destroy(&(coda->empty)))) perror("Cancellazione della Variabile di Condizionamento");
+    if((errno=pthread_cond_destroy(&(coda->full)))) perror("Cancellazione della Variabile di Condizionamento");
+    }
 }
 
 #endif //_queue_c_
