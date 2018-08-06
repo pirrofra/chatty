@@ -101,7 +101,7 @@ int readData(long fd, message_data_t *data){
                 return 0;
             }
             len-=byte_read;
-            position+=byte_read+1;
+            position+=byte_read;
         }
     }
 
@@ -139,6 +139,10 @@ int sendRequest(long fd, message_t *msg){
     return byte_wrote;
 }
 
+int sendHeader(long fd, message_hdr_t* msg){
+    TRYWRITE(write(fd,&(msg),sizeof(message_hdr_t)));
+    return 1;
+}
 
 
 

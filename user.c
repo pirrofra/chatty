@@ -123,7 +123,6 @@ op_t registerUser(manager* usrmngr, char* nickname,int fd){
 op_t connectUser(manager* usrmngr, char* nickname, int fd){
     int err=0;
     int i=hash_pjw((void*) nickname)%NUMMUTEX;
-    printf("Mutex n%d\n",i);
     char* newnick;
     int* key;
     op_t result=OP_FAIL;
@@ -210,7 +209,7 @@ op_t disconnectUser(manager* usrmngr, int fd){
     int tmp=0;
     userdata* data;
     char* name;
-    op_t result;
+    op_t result=OP_FAIL;
     if(usrmngr==NULL||fd<0) return OP_FAIL;
     MUTEXLOCK(usrmngr->lockc);
     name=icl_hash_find(usrmngr->connected_user,&(fd));

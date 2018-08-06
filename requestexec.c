@@ -149,8 +149,7 @@ int posttxt_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,s
     msg.hdr.op=TXT_MESSAGE;
     result=notifymex(fd,msg,usrmngr,configurazione,chattystats);
     setHeader(&(reply.hdr),result,"");
-    setData(&(reply.data),"",NULL,0);
-    if(sendRequest(fd,&reply)<=0) err=-1;
+    if(sendHeader(fd,&reply.hdr)<=0) err=-1;
     return err;
 }
 
@@ -183,8 +182,7 @@ int posttextall_op(int fd, message_t msg, manager* usrmngr,configs* configurazio
         }
     }
     setHeader(&(reply.hdr),result,"");
-    setData(&(reply.data),"",NULL,0);
-    if(sendRequest(fd,&reply)<=0) err=-1;
+    if(sendHeader(fd,&reply.hdr)<=0) err=-1;
     return err;
 }
 
