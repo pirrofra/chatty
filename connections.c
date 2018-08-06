@@ -127,9 +127,14 @@ int sendData(long fd, message_data_t *msg){
     while(len>0){
         TRYWRITE(byte_wrote=write(fd,position,len));
         len-=byte_wrote;
-        position+=byte_wrote+1;
+        position+=byte_wrote;
     }
     return 1;
+}
+int sendHeader(long fd, message_t *msg){
+    int byte_wrote=0;
+    TRYWRITE(byte_wrote=write(fd,&(msg->hdr),sizeof(message_hdr_t)));
+    return byte_wrote;
 }
 
 int sendRequest(long fd, message_t *msg){
@@ -139,10 +144,6 @@ int sendRequest(long fd, message_t *msg){
     return byte_wrote;
 }
 
-int sendHeader(long fd, message_hdr_t* msg){
-    TRYWRITE(write(fd,&(msg),sizeof(message_hdr_t)));
-    return 1;
-}
 
 
 

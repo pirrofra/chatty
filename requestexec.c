@@ -53,7 +53,7 @@ int connect_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,s
     if(result==OP_OK)users=connectedUserList(usrmngr);
     if(users){
         setData(&(reply.data),"",users->str,(users->str_dim+1)*users->lenght);
-        updusers(chattystats,1);
+        updonline(chattystats,1);
     }
     else {
         setData(&(reply.data),"",NULL,0);
@@ -114,7 +114,7 @@ op_t notifymex(int fd, message_t msg, manager* usrmngr,configs* configurazione,s
             result=OP_OK;
         }
     }
-    else if(isingroup(usrmngr,msg.data.hdr.receiver,msg.hdr.sender)){
+    else if(isingroup(usrmngr,msg.hdr.sender,msg.data.hdr.receiver)){
         char* tmp;
         users=userGroupList(usrmngr,msg.data.hdr.receiver);
         tmp=users->str;
@@ -149,7 +149,8 @@ int posttxt_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,s
     msg.hdr.op=TXT_MESSAGE;
     result=notifymex(fd,msg,usrmngr,configurazione,chattystats);
     setHeader(&(reply.hdr),result,"");
-    if(sendHeader(fd,&reply.hdr)<=0) err=-1;
+    setData(&(reply.data),"",NULL,0);
+    if(sendHeader(fd,&reply)<=0) err=-1;
     return err;
 }
 
@@ -182,7 +183,8 @@ int posttextall_op(int fd, message_t msg, manager* usrmngr,configs* configurazio
         }
     }
     setHeader(&(reply.hdr),result,"");
-    if(sendHeader(fd,&reply.hdr)<=0) err=-1;
+    setData(&(reply.data),"",NULL,0);
+    if(sendHeader(fd,&reply)<=0) err=-1;
     return err;
 }
 
@@ -364,7 +366,7 @@ int creategroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazio
     int err=0;
     message_t reply;
     op_t result=OP_FAIL;
-    result=createGroup(usrmngr,msg.hdr.sender,msg.data.buf);
+    result=createGroup(usrmngr,msg.hdr.sender,msg.data.hdr.receiver);
     if(result!=OP_OK) upderrors(chattystats,1);
     setHeader(&(reply.hdr),result,"");
     setData(&(reply.data),"",NULL,0);
@@ -376,7 +378,7 @@ int addgroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,
     int err=0;
     message_t reply;
     op_t result=OP_FAIL;
-    result=addtoGroup(usrmngr,msg.hdr.sender,msg.data.buf);
+    result=addtoGroup(usrmngr,msg.hdr.sender,msg.data.hdr.receiver);
     if(result!=OP_OK) upderrors(chattystats,1);
     setHeader(&(reply.hdr),result,"");
     setData(&(reply.data),"",NULL,0);
@@ -388,7 +390,7 @@ int delfromgroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazi
     int err=0;
     message_t reply;
     op_t result=OP_FAIL;
-    result=deletefromGroup(usrmngr,msg.hdr.sender,msg.data.buf);
+    result=deletefromGroup(usrmngr,msg.hdr.sender,msg.data.hdr.receiver);
     if(result!=OP_OK) upderrors(chattystats,1);
     setHeader(&(reply.hdr),result,"");
     setData(&(reply.data),"",NULL,0);
@@ -400,7 +402,7 @@ int delgroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,
     int err=0;
     message_t reply;
     op_t result=OP_FAIL;
-    result=deleteGroup(usrmngr,msg.hdr.sender,msg.data.buf);
+    result=deleteGroup(usrmngr,msg.hdr.sender,msg.data.hdr.receiver);
     if(result!=OP_OK) upderrors(chattystats,1);
     setHeader(&(reply.hdr),result,"");
     setData(&(reply.data),"",NULL,0);

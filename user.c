@@ -123,7 +123,7 @@ op_t registerUser(manager* usrmngr, char* nickname,int fd){
 op_t connectUser(manager* usrmngr, char* nickname, int fd){
     int err=0;
     int i=hash_pjw((void*) nickname)%NUMMUTEX;
-    char* newnick;
+    char* newnick=NULL;
     int* key;
     op_t result=OP_FAIL;
     userdata* data;
@@ -144,7 +144,7 @@ op_t connectUser(manager* usrmngr, char* nickname, int fd){
         *key=fd;
         MUTEXLOCK(usrmngr->lockc);
 
-        if(usrmngr->max_connected_user>=(usrmngr->connected_user)->nentries) {
+        if(usrmngr->max_connected_user<=(usrmngr->connected_user)->nentries) {
             result=OP_TOO_MANY_CLIENT;
             free(key);
             free(newnick);

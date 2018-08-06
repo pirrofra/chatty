@@ -116,8 +116,8 @@ int sendRequest(long fd, message_t *msg);
  */
 int sendData(long fd, message_data_t *msg);
 
+int sendHeader(long fd, message_t *msg);
 
-int sendHeader(long fd, message_hdr_t* msg);
 /* da completare da parte dello studente con eventuali altri metodi di interfaccia */
 
 
