@@ -1,1 +1,0 @@
--std=c99 -Wall -pedantic -g -DMAKE_VALGRIND_HAPPY -I$PWD -fsanitize=address -fsanitize=thread
