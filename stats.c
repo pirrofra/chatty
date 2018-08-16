@@ -81,6 +81,5 @@ void upderrors(struct statistics* stats, int n){
 }
 
 void destroystats(struct statistics* stats){
-    if((errno=pthread_mutex_lock(&stats->lock))) perror("Cancellamento Mutex");
     if((errno=pthread_mutex_destroy(&stats->lock))) perror("Cancellamento Mutex");
 }

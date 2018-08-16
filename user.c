@@ -67,7 +67,7 @@ int initializeManager(manager* usrmngr, int max_user, int dim_history){
 
 op_t registerUser(manager* usrmngr, char* nickname,int fd){
     int err=0;
-    int i=hash_pjw((void*) nickname)%NUMMUTEX;
+    int i=hash(usrmngr->registred_user,(void*) nickname)%NUMMUTEX;
     char* newnick;
     char* newnick2;
     int* key;
@@ -122,7 +122,7 @@ op_t registerUser(manager* usrmngr, char* nickname,int fd){
 
 op_t connectUser(manager* usrmngr, char* nickname, int fd){
     int err=0;
-    int i=hash_pjw((void*) nickname)%NUMMUTEX;
+    int i=hash(usrmngr->registred_user,(void*) nickname)%NUMMUTEX;
     char* newnick;
     int* key;
     op_t result=OP_FAIL;
@@ -144,7 +144,7 @@ op_t connectUser(manager* usrmngr, char* nickname, int fd){
         *key=fd;
         MUTEXLOCK(usrmngr->lockc);
 
-        if(usrmngr->max_connected_user<=(usrmngr->connected_user)->nentries) {
+        if(usrmngr->max_connected_user<=icl_hash_dimension(usrmngr->connected_user)) {
             result=OP_TOO_MANY_CLIENT;
             free(key);
             free(newnick);
@@ -182,7 +182,7 @@ op_t unregisterUser(manager* usrmngr, char* nickname){
     int h1=0;
     int h2=0;
     if(usrmngr==NULL||nickname==NULL)return OP_FAIL;
-    h2=hash_pjw((void*) nickname)%NUMMUTEX;
+    h2=hash(usrmngr->registred_user,(void*) nickname)%NUMMUTEX;
     MUTEXLOCK(usrmngr->lockr[h2]);
     for (i=0;i<(usrmngr->groups)->nbuckets; i++){
             h1=i%NUMMUTEX;
@@ -218,7 +218,7 @@ op_t disconnectUser(manager* usrmngr, int fd){
     if(tmp==0) result=OP_USR_NOT_CONNECTED;
     else if(tmp==-1) result=OP_FAIL;
     else{
-        int i=hash_pjw((void*) name)%NUMMUTEX;
+        int i=hash(usrmngr->registred_user,(void*) name)%NUMMUTEX;
         MUTEXLOCK(usrmngr->lockr[i]);
         data=icl_hash_find(usrmngr->registred_user,name);
         data->fd=-1;
@@ -232,7 +232,7 @@ op_t disconnectUser(manager* usrmngr, int fd){
 int storeMessage(manager* usrmngr, char* nickname ,message_t* msg){
     int result=-2;
     int tmp=0;
-    int i=hash_pjw((void*) nickname)%NUMMUTEX;
+    int i=hash(usrmngr->registred_user,(void*) nickname)%NUMMUTEX;
     userdata* data;
     if(usrmngr==NULL||nickname==NULL||msg==NULL) return -2;
     MUTEXLOCK(usrmngr->lockr[i]);
@@ -249,6 +249,25 @@ int storeMessage(manager* usrmngr, char* nickname ,message_t* msg){
     return result;
 }
 
+op_t prevMessage(manager* usrmngr, char* nickname,history** newHistory){
+    op_t result=OP_FAIL;
+    userdata* data;
+    int i=hash(usrmngr->registred_user,(void*) nickname)%NUMMUTEX;
+    *newHistory=NULL;
+    MUTEXLOCK(usrmngr->lockr[i]);
+    data=icl_hash_find(usrmngr->registred_user,nickname);
+    if(data){
+        *newHistory=copyHistory(data->user_history);
+        if(*newHistory) {
+            result=OP_OK;
+            resetPending(data->user_history);
+        }
+        else result=OP_FAIL;
+    }
+    else result=OP_NICK_UNKNOWN;
+    MUTEXUNLOCK(usrmngr->lockr[i]);
+    return result;
+}
 
 
 op_t createGroup(manager* usrmngr, char* creator, char* name){
@@ -264,7 +283,7 @@ op_t createGroup(manager* usrmngr, char* creator, char* name){
     memset(newname,'\0',(MAX_NAME_LENGTH+1)*sizeof(char));
     strncpy(newname,name,MAX_NAME_LENGTH*sizeof(char));
     int h=0;
-    h=hash_pjw((void*) name)%NUMMUTEX;
+    h=hash(usrmngr->groups,(void*) name)%NUMMUTEX;
     MUTEXLOCK(usrmngr->lockr[h]);
     data=icl_hash_find(usrmngr->registred_user,name);
     if(!data){
@@ -295,8 +314,8 @@ op_t addtoGroup(manager* usrmngr, char*nickname, char* groupname){
     int h1=0;
     int h2;
     if(usrmngr==NULL||nickname==NULL||groupname==NULL) return OP_FAIL;
-    h1=hash_pjw((void*) groupname)%NUMMUTEX;
-    h2=hash_pjw((void*) nickname)%NUMMUTEX;
+    h1=hash(usrmngr->groups,(void*) groupname)%NUMMUTEX;
+    h2=hash(usrmngr->registred_user, (void*) nickname)%NUMMUTEX;
     MUTEXLOCK(usrmngr->lockr[h2]);
     data=icl_hash_find(usrmngr->registred_user,nickname);
     if(data!=NULL){
@@ -322,7 +341,7 @@ op_t deletefromGroup(manager* usrmngr, char*nickname, char* groupname){
     int tmp=0;
     int h=0;
     if(usrmngr==NULL||nickname==NULL||groupname==NULL) return OP_FAIL;
-    h=hash_pjw((void*) groupname)%NUMMUTEX;
+    h=hash(usrmngr->groups,(void*) groupname)%NUMMUTEX;
     MUTEXLOCK(usrmngr->lockg[h]);
     group=icl_hash_find(usrmngr->groups,groupname);
     if(group==NULL) result=OP_NICK_UNKNOWN;
@@ -345,7 +364,7 @@ op_t deleteGroup(manager* usrmngr,char*nickname,char* groupname){
     op_t result=OP_FAIL;
     int h=0;
     if(usrmngr==NULL||groupname==NULL||nickname==NULL) return OP_FAIL;
-    h=hash_pjw((void*) groupname)%NUMMUTEX;
+    h=hash(usrmngr->groups,(void*) groupname)%NUMMUTEX;
     MUTEXLOCK(usrmngr->lockg[h]);
     group=icl_hash_find(usrmngr->groups,groupname);
     if(group==NULL) result=OP_NICK_UNKNOWN;
@@ -372,12 +391,12 @@ stringlist* userGroupList(manager* usrmngr, char* groupname){
     int i=0;
     icl_entry_t* j;
     if(usrmngr==NULL||groupname==NULL) return ret;
-    h=hash_pjw((void*) groupname)%NUMMUTEX;
+    h=hash(usrmngr->groups,(void*) groupname)%NUMMUTEX;
     MUTEXLOCK(usrmngr->lockg[h]);
     group=icl_hash_find(usrmngr->groups,groupname);
     if(group==NULL) ret=NULL;
     else{
-        initializeStringList(&ret,(group->users)->nentries,MAX_NAME_LENGTH);
+        initializeStringList(&ret,icl_hash_dimension(group->users),MAX_NAME_LENGTH);
         icl_hash_foreach(group->users, i, j, kp, dp){
             err=err||(addString(ret,p,kp));
             ++p;
@@ -401,7 +420,7 @@ stringlist* connectedUserList(manager* usrmngr){
     icl_entry_t* j;
     if(usrmngr==NULL) return ret;
     MUTEXLOCK(usrmngr->lockc);
-    initializeStringList(&ret,(usrmngr->connected_user)->nentries,MAX_NAME_LENGTH);
+    initializeStringList(&ret,icl_hash_dimension(usrmngr->connected_user),MAX_NAME_LENGTH);
     icl_hash_foreach((usrmngr->connected_user), i, j, kp, dp){
         err=err||(addString(ret,p,dp));
         ++p;
@@ -427,7 +446,7 @@ stringlist* registredUserList(manager* usrmngr){
     for(i=0;i<NUMMUTEX;i++){
         MUTEXLOCK(usrmngr->lockr[i])};
     }
-    initializeStringList(&ret,(usrmngr->registred_user)->nentries,MAX_NAME_LENGTH);
+    initializeStringList(&ret,icl_hash_dimension(usrmngr->registred_user),MAX_NAME_LENGTH);
     for (i=0;i<(usrmngr->registred_user)->nbuckets; i++){
             for (j=(usrmngr->registred_user)->buckets[i];j!=NULL&&((key=j->key)!=NULL)&&((data=j->data)!=NULL);j=j->next){
                 err=err ||(addString(ret,p,key));
@@ -446,7 +465,7 @@ stringlist* registredUserList(manager* usrmngr){
 
 int groupexist(manager* usrmngr, char* name){
     int result=0;
-    int i=hash_pjw((void*) name)%NUMMUTEX;
+    int i=hash(usrmngr->groups,(void*) name)%NUMMUTEX;
     MUTEXLOCK(usrmngr->lockg[i]);
     if(icl_hash_find(usrmngr->groups,name)) result=1;
     else result=0;
@@ -457,7 +476,7 @@ int groupexist(manager* usrmngr, char* name){
 int isingroup(manager* usrmngr, char* nickname,char* groupname){
     int result=0;
     groupdata* group;
-    int i=hash_pjw((void*) groupname)%NUMMUTEX;
+    int i=hash(usrmngr->groups,(void*) groupname)%NUMMUTEX;
     MUTEXLOCK(usrmngr->lockg[i]);
     group=icl_hash_find(usrmngr->groups,groupname);
     if(group && icl_hash_find(group->users, nickname)) result=1;
@@ -469,12 +488,10 @@ void destroy(manager* usrmngr){
     icl_hash_destroy(usrmngr->connected_user, NULL,free);
     icl_hash_destroy(usrmngr->groups,free,freeGroup);
     for(int i=0;i<NUMMUTEX;i++){
-        if((errno=pthread_mutex_lock(&usrmngr->lockr[i]))) perror("Acquisizione Mutex");
         if((errno=pthread_mutex_destroy(&usrmngr->lockr[i]))) perror("Cancellamento Mutex");
     }
     free(usrmngr->lockr);
     for(int i=0;i<NUMMUTEX;i++){
-        if((errno=pthread_mutex_lock(&usrmngr->lockr[i]))) perror("Cancellamento Mutex");
         if((errno=pthread_mutex_destroy(&usrmngr->lockg[i]))) perror("Cancellamento Mutex");
     }
     free(usrmngr->lockg);

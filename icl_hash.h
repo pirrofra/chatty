@@ -34,6 +34,8 @@ typedef struct icl_hash_s {
 unsigned int hash_pjw(void*);
 int string_compare(void*, void*);
 
+unsigned int hash(icl_hash_t* table, void*key);
+
 icl_hash_t *
 icl_hash_create( int nbuckets, unsigned int (*hash_function)(void*), int (*hash_key_compare)(void*, void*) );
 
@@ -47,6 +49,8 @@ icl_hash_destroy(icl_hash_t *, void (*)(void*), void (*)(void*)),
     icl_hash_dump(FILE *, icl_hash_t *);
 
 int icl_hash_delete( icl_hash_t *ht, void* key, void (*free_key)(void*), void (*free_data)(void*) );
+
+int icl_hash_dimension(icl_hash_t* ht);
 
 
 

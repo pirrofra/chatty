@@ -140,7 +140,7 @@ int sendRequest(long fd, message_t *msg){
 }
 
 int sendHeader(long fd, message_hdr_t* hdr){
-    TRYWRITE(write(fd,msg,sizeof(message_hdr_t)));
+    TRYWRITE(write(fd,hdr,sizeof(message_hdr_t)));
     return 1;
 }
 

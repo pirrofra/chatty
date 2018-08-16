@@ -35,11 +35,16 @@ int initializeQueue(queue* coda, int size){
 }
 
 int enqueue(queue* coda, int fd){
+    extern int sigterm;
     int i=0;
     if(coda==NULL||fd<0) return -1;
     SYSCALLCHECK(pthread_mutex_lock(&(coda->lock)), "Mutex Lock");
     while(coda->nelem==coda->size){
         SYSCALLCHECK(pthread_cond_wait(&(coda->full),&(coda->lock)),"Wait su V.C.");
+        if(sigterm==1) {
+            if((errno=pthread_mutex_unlock(&coda->lock))) perror("Mutex Lock");
+            return -1;
+        }
     }
     i=(coda->last+1)%coda->size;
     coda->Table[i]=fd;
@@ -51,10 +56,15 @@ int enqueue(queue* coda, int fd){
 }
 
 int dequeue(queue*coda, int* fd){
+    extern int sigterm;
     if(coda==NULL) return -1;
     SYSCALLCHECK(pthread_mutex_lock(&(coda->lock)),"Acquisizione del Mutex Lock");
     while(coda->nelem==0){
         SYSCALLCHECK(pthread_cond_wait(&(coda->empty),&(coda->lock)),"Wait su Variabile di Condizionamento");
+        if(sigterm==1) {
+            if((errno=pthread_mutex_unlock(&coda->lock))) perror("Mutex Lock");
+            return -1;
+        }
     }
     *fd=coda->Table[coda->first];
     coda->first=(coda->first+1)%coda->size;
@@ -67,10 +77,12 @@ int dequeue(queue*coda, int* fd){
 void freeQueue(queue* coda){
     if(coda!=NULL){
     free(coda->Table);
-    if((errno=pthread_mutex_lock(&(coda->lock)))) perror("Mutex Lock");
-    if((errno=pthread_mutex_destroy(&(coda->lock)))) perror("Cancellazione del Mutex Lock");
+    if((errno=pthread_cond_broadcast(&(coda->empty)))) perror("Broadcast di Condizionamento");
     if((errno=pthread_cond_destroy(&(coda->empty)))) perror("Cancellazione della Variabile di Condizionamento");
+    if((errno=pthread_cond_broadcast(&(coda->full)))) perror("Broadcast di Condizionamento");
     if((errno=pthread_cond_destroy(&(coda->full)))) perror("Cancellazione della Variabile di Condizionamento");
+    if((errno=pthread_mutex_destroy(&(coda->lock)))) perror("Cancellazione del Mutex Lock");
+
     }
 }
 

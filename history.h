@@ -52,7 +52,15 @@ void initializeHistory(history** storia, int size);
 */
 int addMessage(history* storia, message_t* mex, int fd);
 
+/**
+ * @fuction copyHistory
+ * @brief copia la storia dei messaggi, ordinandoli dal meno recente al più recente
+ * @param storia history da copiare
+ * @return NULL in caso di errore, puntatore alla nuova history in caso di successo
+*/
+history* copyHistory(history* storia);
 
+void resetPending(history* storia);
 
 /**
  * @function freeHistory

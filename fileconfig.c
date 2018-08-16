@@ -76,8 +76,8 @@ configs* readConfig(char* path){
                 configurazione->StatFileName=path;
 
             }
-            else if(strcmp(s1,"MaxConnections")==0)configurazione->MaxConnections=strtoul(s2,NULL,10);
-            else if(strcmp(s1,"MaxFileSize")==0) configurazione->MaxFileSize=strtoul(s2,NULL,10);
+            else if(strcmp(s1,"MaxConnections")==0)configurazione->MaxConnections=(strtoul(s2,NULL,10)*sizeof(char));
+            else if(strcmp(s1,"MaxFileSize")==0) configurazione->MaxFileSize=(strtoul(s2,NULL,10)*1024);
             else if(strcmp(s1,"MaxMsgSize")==0) configurazione->MaxMsgSize=strtoul(s2,NULL,10);
             else if(strcmp(s1, "MaxHistMsgs")==0) configurazione->MaxHistMsgs=strtoul(s2,NULL,10);
             else if(strcmp(s1,"ThreadsInPool")==0) configurazione->ThreadsInPool=strtoul(s2,NULL,10);

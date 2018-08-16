@@ -138,6 +138,8 @@ int simpleCompare(void* a, void* b);
 */
 int storeMessage(manager* usrmngr, char* nickname ,message_t* msg);
 
+
+op_t prevMessage(manager* usrmngr, char* nickname,history** newHistory);
 /**
  * @function createGroup
  * @brief crea un nuovo gruppo

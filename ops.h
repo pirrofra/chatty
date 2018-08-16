@@ -64,9 +64,7 @@ typedef enum {
     OP_TOO_MANY_CLIENT = 34, //troppi client connessi
     OP_USR_ALREADY_IN_GROUP = 35, //utente già nel gruppo
     OP_NO_PERMISSION = 36, //utente non ha il permesso di eseguire l'operazione
-    OP_FILE_EXISTS =37, //il file che si sta tentando di mandare esiste già
-    OP_NOT_EXISTS=38, //l'operazione richiesta non esiste
-    OP_FILE_TOOBIG=39, //file troppo grande
+    OP_NOT_EXISTS=37, //l'operazione richiesta non esiste
 
 
     /*

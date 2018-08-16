@@ -21,9 +21,10 @@
 void initializeHistory(history** storia, int size){
     *storia=malloc(sizeof(history));
     MEMORYCHECK(*storia);
+    memset(*storia,0,sizeof(history));
     (*storia)->data=malloc(size*sizeof(message_t*));
     MEMORYCHECK((*storia)->data);
-    memset((*storia)->data,0,size*sizeof(char));
+    memset((*storia)->data,0,size*sizeof(message_t*));
     (*storia)->pending=malloc(size*sizeof(int));
     MEMORYCHECK((*storia)->pending);
     memset((*storia)->pending,0,size*sizeof(int));
@@ -37,6 +38,7 @@ int addMessage(history* storia, message_t* mex,int fd){
     if(mex==NULL || storia==NULL) return -1;
     int i=(storia->last+1)%storia->size;
     if(storia->data[i]!=NULL){
+        free(storia->data[i]->data.buf);
         free(storia->data[i]);
         storia->first=i+1;
     }
@@ -48,8 +50,45 @@ int addMessage(history* storia, message_t* mex,int fd){
     return 0;
 }
 
+history* copyHistory(history* storia){
+    history* newHistory = NULL;
+    if(storia){
+        initializeHistory(&newHistory, storia->size);
+        int i=storia->first;
+        int j=0;
+        int el=0;
+        while(el<storia->nel){
+            if(storia->data[i]){
+                newHistory->data[j]=copymex(*storia->data[i]);
+                newHistory->pending[j]=storia->pending[i];
+                newHistory->last=j;
+                j=(j+1)%newHistory->size;
+                ++(newHistory->nel);
+            }
+            i=(i+1)%newHistory->size;
+            ++el;
+        }
+    }
+
+    return newHistory;
+}
+
+void resetPending(history* storia){
+    memset(storia->pending,0,(storia->size)*sizeof(int));
+}
+
 void freeHistory(history* storia){
     if(storia!=NULL){
+        int i=storia->first;
+        int el=0;
+        while(el<storia->nel){
+            if(storia->data[i]){
+                free(storia->data[i]->data.buf);
+                free(storia->data[i]);
+            }
+            i=(i+1)%storia->size;
+            ++el;
+        }
         free(storia->data);
         free(storia->pending);
         free(storia);

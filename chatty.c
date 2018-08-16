@@ -36,13 +36,13 @@
  */
 struct statistics chattyStats;
 manager usrmngr;
-queue coda_client;
+queue codaClient;
 configs* configurazione=NULL;
-fd_set fdascolto;
-int local_max=0;
-pthread_mutex_t fd_set_lock=PTHREAD_MUTEX_INITIALIZER;
-int max_sock=0;
+fd_set fdAscolto;
+pthread_mutex_t fdSetLock=PTHREAD_MUTEX_INITIALIZER;
+int maxSock=0;
 int sigterm=0;
+int sigUsr1Arrived=0;
 pthread_t* pool;
 
 static void usage(const char *progname) {
@@ -50,123 +50,184 @@ static void usage(const char *progname) {
     fprintf(stderr, "  %s -f conffile\n", progname);
 }
 
+void setSigTerm(int signum);
+
+void setSigUsr1Arrived(int signum);
+
+void printFileStat();
+
+int setSignalHandler();
+
 void cleanup();
 
 void* ThreadMain(void* arg);
 
 int main(int argc, char *argv[]) {
     int dispatcher=0;
-    fd_set localset;
+    fd_set localSet;
+    int localMax=0;
     int err=0;
     struct timeval timeout={0,1000};
     if(argc!=3){
         usage(argv[0]);
         return -1;
     }
-    printf("Inizializzo il Server\nLeggo il file di configurazione\n");
+    printf("Inizializzazione Server\n");
     if((configurazione=readConfig(argv[2]))==NULL) return -1;
-    printf("File configurazione letto correttamente\nInizializzo il gestore degli utenti\n");
     INITIALIZE(initializeManager(&usrmngr,configurazione->MaxConnections,configurazione->MaxHistMsgs));
-    printf("Gestore degli Utenti inizializzato correttamente\nInizializzo Coda delle richieste\n");
-    INITIALIZE(initializeQueue(&coda_client,configurazione->MaxConnections));
-    printf("Coda inizializzata correttamente\nAzzeramento Statistiche\n");
+    INITIALIZE(initializeQueue(&codaClient,configurazione->MaxConnections));
     INITIALIZE(initializeStats(&chattyStats));
-    printf("Statistiche Azzerate\nApertura del Socket\n");
     if((dispatcher=openDispatcher(configurazione->UnixPath))==-1){
         printf("Errore nell'inizializzazione, termino il server\n");
         return -1;
 
     }
-    printf("Socket aperto con successo\n");
-    //GESTIONE DEI SEGNALI
-    printf("Avvio il Pool di Thread\n");
+    INITIALIZE(setSignalHandler());
     pool=malloc(configurazione->ThreadsInPool*sizeof(pthread_t));
     MEMORYCHECK(pool);
     memset(pool,0,configurazione->ThreadsInPool*sizeof(pthread_t));
-    for(int i=0;i<configurazione->ThreadsInPool;i++)
-        INITIALIZE(pthread_create(&pool[i],NULL,ThreadMain,NULL));
-    printf("Pool Thread Avviato\n");
-    SYSCALLCHECK(pthread_mutex_lock(&fd_set_lock),"Mutex Lock");
-    FD_ZERO(&fdascolto);
-    FD_SET(dispatcher, &fdascolto);
-    if(dispatcher>max_sock) max_sock=dispatcher;
-    SYSCALLCHECK(pthread_mutex_unlock(&fd_set_lock),"Mutex Lock");
+    for(int i=0;i<configurazione->ThreadsInPool;i++){
+        int* threadnum=malloc(sizeof(int));
+        MEMORYCHECK(threadnum);
+        *threadnum=i+1;
+        INITIALIZE(pthread_create(&pool[i],NULL,ThreadMain,threadnum));
+    }
+    SYSCALLCHECK(pthread_mutex_lock(&fdSetLock),"Mutex Lock");
+    FD_ZERO(&fdAscolto);
+    FD_SET(dispatcher, &fdAscolto);
+    if(dispatcher>maxSock) maxSock=dispatcher;
+    SYSCALLCHECK(pthread_mutex_unlock(&fdSetLock),"Mutex Lock");
     if(atexit(cleanup)){
         printf("Impossibile settare la funzione di uscita\n");
         return -1;
     }
+    printf("Server Inizializzato\nIn attesa di richieste...\n");
     while(!sigterm){
-        SYSCALLCHECK(pthread_mutex_lock(&fd_set_lock),"Mutex Lock");
-        localset=fdascolto;
-        local_max=max_sock;
-        SYSCALLCHECK(pthread_mutex_unlock(&fd_set_lock),"Mutex Lock");
+
+        if(sigUsr1Arrived) printFileStat();
+
+        SYSCALLCHECK(pthread_mutex_lock(&fdSetLock),"Mutex Lock");
+        localSet=fdAscolto;
+        localMax=maxSock;
+        SYSCALLCHECK(pthread_mutex_unlock(&fdSetLock),"Mutex Lock");
         //select e gestione Coda
-        err=select(local_max+1,&localset,NULL,NULL,&timeout);
-        if(err==-1){
+        err=select(localMax+1,&localSet,NULL,NULL,&timeout);
+        if(err==-1&&(errno!=EINTR)){
             perror("Select");
             return -1;
         }
-
-        for(int i=0;i<=local_max;i++){
-            if(FD_ISSET(i,&localset)){
-                if(i==dispatcher){
-                    int accettato=0;
-                    int new_fd=0;
-                    SYSCALLCHECK(pthread_mutex_lock(&(chattyStats.lock)),"Mutex Lock");
-                    if(chattyStats.nonline<configurazione->MaxConnections) accettato=1;
-                    SYSCALLCHECK(pthread_mutex_unlock(&(chattyStats.lock)),"Mutex Lock");
-
-                    if(accettato&&(new_fd=acceptConnection(dispatcher,configurazione->UnixPath))>=0){
-                        SYSCALLCHECK(pthread_mutex_lock(&fd_set_lock),"Mutex Lock");
-                        FD_SET(new_fd,&fdascolto);
-                        if(new_fd>max_sock) max_sock=new_fd;
-                        SYSCALLCHECK(pthread_mutex_unlock(&fd_set_lock),"Mutex Lock");
+        else if(err>0){
+            for(int i=3;i<=localMax;i++){
+                if(FD_ISSET(i,&localSet)){
+                    if(i==dispatcher){
+                        int accettato=0;
+                        int new_fd=0;
+                        SYSCALLCHECK(pthread_mutex_lock(&(chattyStats.lock)),"Mutex Lock");
+                        if(chattyStats.nonline<configurazione->MaxConnections) accettato=1;
+                        SYSCALLCHECK(pthread_mutex_unlock(&(chattyStats.lock)),"Mutex Lock");
+                        if(accettato&&(new_fd=acceptConnection(dispatcher,configurazione->UnixPath))>=0){
+                            SYSCALLCHECK(pthread_mutex_lock(&fdSetLock),"Mutex Lock");
+                            FD_SET(new_fd,&fdAscolto);
+                            if(new_fd>maxSock) maxSock=new_fd;
+                            SYSCALLCHECK(pthread_mutex_unlock(&fdSetLock),"Mutex Lock");
+                            printf("Nuova Connessione Accettata\n");
+                        }
                     }
-                }
-                else{
-                    SYSCALLCHECK(pthread_mutex_lock(&fd_set_lock),"Mutex Lock");
-                    FD_CLR(i,&fdascolto);
-                    SYSCALLCHECK(pthread_mutex_unlock(&fd_set_lock),"Mutex Lock");
-                    if(enqueue(&coda_client,i)==-1) return -1;
+                    else{
+                        SYSCALLCHECK(pthread_mutex_lock(&fdSetLock),"Mutex Lock");
+                        FD_CLR(i,&fdAscolto);
+                        SYSCALLCHECK(pthread_mutex_unlock(&fdSetLock),"Mutex Lock");
+                        if(enqueue(&codaClient,i)==-1) return -1;
+                        printf("Nuova Richiesta sul socket %d\n",i);
+                    }
                 }
             }
         }
 
     }
-    printf("SIGTERM arrivato, Termino il Server\n");
+    printf("Server in chiusura\n");
     return 0;
 }
 
 void* ThreadMain(void* arg){
+    int n=*(int*)arg;
+    printf("Worker %d avviato\n",n);
     while(!sigterm){
         int currfd=0;
         int status=0;
-        if(dequeue(&coda_client,&currfd)==-1) return (void*) -1;
-        status=execute(currfd,&usrmngr,configurazione,&chattyStats);
-        if(status==-1) close(currfd);
-        else{
-            if((errno=pthread_mutex_lock(&fd_set_lock))) perror("Mutex Lock");
-            FD_SET(currfd,&fdascolto);
-            if((errno=pthread_mutex_unlock(&fd_set_lock))) perror("Mutex Lock");
+        if(dequeue(&codaClient,&currfd)!=-1){
+            printf("[Worker %d]: Comunicazione sul socket %d iniziata\n",n,currfd);
+            status=execute(currfd,&usrmngr,configurazione,&chattyStats);
+            if(status==-1) {
+                close(currfd);
+                printf("[Worker %d]: Client sul socket %d disconnesso\n",n,currfd);
+            }
+            else{
+                printf("[Worker %d]: Richiesta sul socket %d eseguita\n",n,currfd);
+                if((errno=pthread_mutex_lock(&fdSetLock))) perror("Mutex Lock");
+                FD_SET(currfd,&fdAscolto);
+                if((errno=pthread_mutex_unlock(&fdSetLock))) perror("Mutex Lock");
+
+            }
         }
     }
+    free(arg);
     return 0;
 }
 
 void cleanup(){
     sigterm=1;
-    printf("termino i Thread");
+    if((errno=pthread_cond_broadcast(&codaClient.empty))) perror("BroadCast Variabile Condizionamento");
+    if((errno=pthread_cond_broadcast(&codaClient.full))) perror("BroadCast Variabile Condizionamento");
     for(int i=0;i<configurazione->ThreadsInPool;i++)
         if((errno=(pthread_join(pool[i],NULL)))) perror("Errore nel pthread_join");
 
-    printf("Chiudo i Socket\n");
-    for(int i=0;i<max_sock;i++) close(i);
-    printf("Socket Chiusi\n");
+    for(int i=3;i<=maxSock;i++) close(i);
 
-    printf("Libero la memoria\n");
     destroy(&usrmngr);
     destroystats(&chattyStats);
-    freeQueue(&coda_client);
+    freeQueue(&codaClient);
     freeC(configurazione);
-    printf("Memoria Terminata\n");
+    free(pool);
+    printf("Server Chiuso\n" );
+}
+
+int setSignalHandler(){
+    struct sigaction sigPipe;
+    struct sigaction termina;
+    struct sigaction stampastats;
+    memset(&sigPipe,0,sizeof(sigPipe));
+    memset(&termina,0,sizeof(termina));
+    memset(&stampastats,0,sizeof(stampastats));
+    sigPipe.sa_handler=SIG_IGN;
+    SIG_ACTION(SIGPIPE, sigPipe);
+    termina.sa_handler=setSigTerm;
+    SIG_ACTION(SIGINT, termina);
+    SIG_ACTION(SIGTERM, termina);
+    SIG_ACTION(SIGQUIT, termina);
+    stampastats.sa_handler=setSigUsr1Arrived;
+    SIG_ACTION(SIGUSR1, stampastats);
+    return 0;
+}
+
+void setSigUsr1Arrived(int signum){
+    sigUsr1Arrived=1;
+}
+
+void setSigTerm(int signum){
+    sigterm=1;
+}
+
+void printFileStat(){
+    printf("Ricevuta Richiesta di Stampa delle Statistiche\n");
+    FILE* statFile;
+    if((statFile=fopen(configurazione->StatFileName,"w+"))!=NULL){
+        MUTEXLOCK(chattyStats.lock);
+        if(printStats(statFile)==-1)printf("Errore Stampa File Statistiche");
+        MUTEXUNLOCK(chattyStats.lock);
+        fclose(statFile);
+        printf("Statistiche stampate con successo\n");
+    }
+    else perror("Apertura File Statistiche");
+    sigUsr1Arrived=0;
 }

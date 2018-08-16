@@ -5,7 +5,7 @@
  *
  * This simple hash table implementation should be easy to drop into
  * any other peice of code, it does not depend on anything else :-)
- * 
+ *
  * @author Jakub Kurzak
  */
 /* $Id: icl_hash.c 2838 2011-11-22 04:25:02Z mfaverge $ */
@@ -53,11 +53,16 @@ unsigned int hash_pjw(void* key)
     return (hash_value);
 }
 
-int string_compare(void* a, void* b) 
+int string_compare(void* a, void* b)
 {
     return (strcmp( (char*)a, (char*)b ) == 0);
 }
 
+unsigned int hash(icl_hash_t* table, void*key){
+    if(table)
+        return (table->hash_function(key))%table->nbuckets;
+    else return 0;
+}
 
 /**
  * Create a new hash table.
@@ -184,7 +189,7 @@ int icl_hash_delete(icl_hash_t *ht, void* key, void (*free_key)(void*), void (*f
             }
             if (*free_key && curr->key) (*free_key)(curr->key);
             if (*free_data && curr->data) (*free_data)(curr->data);
-            ht->nentries++;
+            ht->nentries--;
             free(curr);
             return 1;
         }
@@ -221,10 +226,10 @@ icl_hash_destroy(icl_hash_t *ht, void (*free_key)(void*), void (*free_data)(void
             curr=next;
         }
     }
-    
+
     if(ht->buckets) free(ht->buckets);
     if(ht) free(ht);
-    
+
 
     return 0;
 }
@@ -258,4 +263,6 @@ icl_hash_dump(FILE* stream, icl_hash_t* ht)
     return 0;
 }
 
-
+int icl_hash_dimension(icl_hash_t* ht){
+    return ht->nentries;
+}
