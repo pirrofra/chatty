@@ -293,7 +293,10 @@ op_t createGroup(manager* usrmngr, char* creator, char* name){
             result=OP_FAIL;
         else if(tmp==0)
             result=OP_NICK_ALREADY;
-        else result=OP_OK;
+        else {
+            addMember(group, creator);
+            result=OP_OK;
+        }
         MUTEXUNLOCK(usrmngr->lockg[h]);
     }
     else result=OP_NICK_ALREADY;
@@ -345,8 +348,10 @@ op_t deletefromGroup(manager* usrmngr, char*nickname, char* groupname){
     MUTEXLOCK(usrmngr->lockg[h]);
     group=icl_hash_find(usrmngr->groups,groupname);
     if(group==NULL) result=OP_NICK_UNKNOWN;
-    else if (!string_compare((void*)group->admin,(void*)nickname)){
-        result=deleteGroup(usrmngr,nickname,groupname);
+    else if (string_compare((void*)group->admin,(void*)nickname)){
+        tmp=icl_hash_delete(usrmngr->groups,groupname,free,freeGroup);
+        if(tmp==-1) result=OP_FAIL;
+        else result=OP_OK;
     }
     else{
         tmp=kick(group,nickname);

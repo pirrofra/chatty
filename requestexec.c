@@ -106,7 +106,6 @@ op_t notifymex(int fd, message_t msg, manager* usrmngr,configs* configurazione,s
         users=userGroupList(usrmngr,msg.data.hdr.receiver);
         tmp=users->str;
         for(int i=0;i<users->lenght;i++){
-            if(strcmp(msg.hdr.sender,tmp)){
                 notify=copymex(msg);
                 fd_receiver=storeMessage(usrmngr,tmp,notify);
                 if(msg.hdr.op==FILE_MESSAGE)updnfile(chattystats,1);
@@ -120,14 +119,13 @@ op_t notifymex(int fd, message_t msg, manager* usrmngr,configs* configurazione,s
                     free(notify);
                 }
 
-            }
             tmp+=(users->str_dim+1);
         }
         freeStringList(users);
         result=OP_OK;
     }
     else {
-        result=OP_NO_PERMISSION;
+        result=OP_NICK_UNKNOWN;
         upderrors(chattystats,1);
    }
 
