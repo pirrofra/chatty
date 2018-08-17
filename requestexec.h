@@ -28,7 +28,7 @@
  * @param chattystats statistiche del server
  * @return 0 se la connessione è ancora attiva, -1 se il client si è disconesso.
 */
-int register_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats);
+int register_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats,pthread_mutex_t* lock);
 
 /**
  * @function connect_op
@@ -40,7 +40,7 @@ int register_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,
  * @param chattystats statistiche del server
  * @return 0 se la connessione è ancora attiva, -1 se il client si è disconesso.
 */
-int connect_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats);
+int connect_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats,pthread_mutex_t* lock);
 
 /**
  * @function copymex
@@ -60,7 +60,7 @@ message_t* copymex(message_t mex);
  * @param chattystats statistiche del server
  * @return op_t estio dell'operazione
 */
-op_t notifymex(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats);
+op_t notifymex(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats,pthread_mutex_t* lock);
 
 /**
  * @function posttxt_op
@@ -72,7 +72,7 @@ op_t notifymex(int fd, message_t msg, manager* usrmngr,configs* configurazione,s
  * @param chattystats statistiche del server
  * @return 0 se la connessione è ancora attiva, -1 se il client si è disconesso.
 */
-int posttxt_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats);
+int posttxt_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats,pthread_mutex_t* lock);
 
 
 /**
@@ -85,7 +85,7 @@ int posttxt_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,s
  * @param chattystats statistiche del server
  * @return 0 se la connessione è ancora attiva, -1 se il client si è disconesso.
 */
-int posttextall_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats);
+int posttextall_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats,pthread_mutex_t* lock);
 
 
 /**
@@ -98,7 +98,7 @@ int posttextall_op(int fd, message_t msg, manager* usrmngr,configs* configurazio
  * @param chattystats statistiche del server
  * @return 0 se la connessione è ancora attiva, -1 se il client si è disconesso.
 */
-int postfile_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats);
+int postfile_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats,pthread_mutex_t* lock);
 
 /**
  * @function getfile_op
@@ -110,7 +110,7 @@ int postfile_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,
  * @param chattystats statistiche del server
  * @return 0 se la connessione è ancora attiva, -1 se il client si è disconesso.
 */
-int getfile_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats);
+int getfile_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats,pthread_mutex_t* lock);
 
 
 /**
@@ -123,7 +123,7 @@ int getfile_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,s
  * @param chattystats statistiche del server
  * @return 0 se la connessione è ancora attiva, -1 se il client si è disconesso.
 */
-int getprevmsgs_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats);
+int getprevmsgs_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats,pthread_mutex_t* lock);
 
 
 /**
@@ -136,7 +136,7 @@ int getprevmsgs_op(int fd, message_t msg, manager* usrmngr,configs* configurazio
  * @param chattystats statistiche del server
  * @return 0 se la connessione è ancora attiva, -1 se il client si è disconesso.
 */
-int usrlist_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats);
+int usrlist_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats,pthread_mutex_t* lock);
 
 
 /**
@@ -149,7 +149,7 @@ int usrlist_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,s
  * @param chattystats statistiche del server
  * @return 0 se la connessione è ancora attiva, -1 se il client si è disconesso.
 */
-int unregister_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats);
+int unregister_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats,pthread_mutex_t* lock);
 
 
 /**
@@ -162,7 +162,7 @@ int unregister_op(int fd, message_t msg, manager* usrmngr,configs* configurazion
  * @param chattystats statistiche del server
  * @return 0 se la connessione è ancora attiva, -1 se il client si è disconesso.
 */
-int disconnect_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats);
+int disconnect_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats,pthread_mutex_t* lock);
 
 
 /**
@@ -175,7 +175,7 @@ int disconnect_op(int fd, message_t msg, manager* usrmngr,configs* configurazion
  * @param chattystats statistiche del server
  * @return 0 se la connessione è ancora attiva, -1 se il client si è disconesso.
 */
-int creategroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats);
+int creategroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats,pthread_mutex_t* lock);
 
 
 /**
@@ -188,7 +188,7 @@ int creategroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazio
  * @param chattystats statistiche del server
  * @return 0 se la connessione è ancora attiva, -1 se il client si è disconesso.
 */
-int addgroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats);
+int addgroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats,pthread_mutex_t* lock);
 
 
 /**
@@ -201,7 +201,7 @@ int addgroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,
  * @param chattystats statistiche del server
  * @return 0 se la connessione è ancora attiva, -1 se il client si è disconesso.
 */
-int delfromgroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats);
+int delfromgroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats,pthread_mutex_t* lock);
 
 
 /**
@@ -214,7 +214,7 @@ int delfromgroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazi
  * @param chattystats statistiche del server
  * @return 0 se la connessione è ancora attiva, -1 se il client si è disconesso.
 */
-int delgroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats);
+int delgroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats,pthread_mutex_t* lock);
 
 /**
  * @function execute
@@ -225,6 +225,6 @@ int delgroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,
  * @param chattystats statistiche del server
  * @return 0 se la connessione è ancora attiva, -1 se il client si è disconesso.
 */
-int execute(int fd, manager* usrmngr, configs* configurazione,struct statistics* chattystats);
+int execute(int fd, manager* usrmngr, configs* configurazione,struct statistics* chattystats,pthread_mutex_t* lock);
 
 #endif //_requestexec_h_

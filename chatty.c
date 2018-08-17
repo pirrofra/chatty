@@ -40,6 +40,8 @@ queue codaClient;
 configs* configurazione=NULL;
 fd_set fdAscolto;
 pthread_mutex_t fdSetLock=PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t writingLock=PTHREAD_MUTEX_INITIALIZER;
+
 int maxSock=0;
 int sigterm=0;
 int sigUsr1Arrived=0;
@@ -157,7 +159,7 @@ void* ThreadMain(void* arg){
         int status=0;
         if(dequeue(&codaClient,&currfd)!=-1){
             printf("[Worker %d]: Comunicazione sul socket %d iniziata\n",n,currfd);
-            status=execute(currfd,&usrmngr,configurazione,&chattyStats);
+            status=execute(currfd,&usrmngr,configurazione,&chattyStats,&writingLock);
             if(status==-1) {
                 close(currfd);
                 printf("[Worker %d]: Client sul socket %d disconnesso\n",n,currfd);

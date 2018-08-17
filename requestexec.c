@@ -20,7 +20,7 @@
 
 
 
-int register_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats){
+int register_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats,pthread_mutex_t* lock){
     int err=0;
     message_t reply;
     stringlist* users;
@@ -37,14 +37,15 @@ int register_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,
         setData(&(reply.data),"",NULL,0);
         upderrors(chattystats,1);
     }
-
+    MUTEXLOCK(*lock);
     if(sendRequest(fd,&reply)<=0) err=-1;
+    MUTEXUNLOCK(*lock);
     if(result==OP_OK) freeStringList(users);
     return err;
 }
 
 
-int connect_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats){
+int connect_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats,pthread_mutex_t* lock){
     int err=0;
     message_t reply;
     stringlist* users=NULL;
@@ -60,14 +61,15 @@ int connect_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,s
         setData(&(reply.data),"",NULL,0);
         upderrors(chattystats,1);
     }
-
+    MUTEXLOCK(*lock);
     if(sendRequest(fd,&reply)<=0) err=-1;
+    MUTEXUNLOCK(*lock);
     if(result==OP_OK) freeStringList(users);
     return err;
 }
 
 
-op_t notifymex(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats){
+op_t notifymex(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats,pthread_mutex_t* lock){
     op_t result=OP_FAIL;
     int fd_receiver;
     stringlist* users;
@@ -88,7 +90,9 @@ op_t notifymex(int fd, message_t msg, manager* usrmngr,configs* configurazione,s
             free(notify);
         }
         else if(fd_receiver>-1){
+            MUTEXLOCK(*lock);
             if(sendRequest(fd_receiver,&msg)<=0) printf("Errore Comunicazione");
+            MUTEXUNLOCK(*lock);
             if(msg.hdr.op==TXT_MESSAGE) updelivered(chattystats,1);
         }
 
@@ -111,7 +115,9 @@ op_t notifymex(int fd, message_t msg, manager* usrmngr,configs* configurazione,s
                 if(msg.hdr.op==FILE_MESSAGE)updnfile(chattystats,1);
                 if(fd_receiver==-1 && msg.hdr.op==TXT_MESSAGE) updndelivered(chattystats,1);
                 else if(fd_receiver>-1){
+                    MUTEXLOCK(*lock);
                     if(sendRequest(fd_receiver,&msg)<=0) printf("Errore Comunicazione");
+                    MUTEXUNLOCK(*lock);
                     if(msg.hdr.op==TXT_MESSAGE)updelivered(chattystats,1);
                 }
                 else{
@@ -136,18 +142,20 @@ op_t notifymex(int fd, message_t msg, manager* usrmngr,configs* configurazione,s
     return result;
 }
 
-int posttxt_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats){
+int posttxt_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats,pthread_mutex_t* lock){
     int err=0;
     message_t reply;
     op_t result=OP_FAIL;
     msg.hdr.op=TXT_MESSAGE;
-    result=notifymex(fd,msg,usrmngr,configurazione,chattystats);
+    result=notifymex(fd,msg,usrmngr,configurazione,chattystats,lock);
     setHeader(&(reply.hdr),result,"");
+    MUTEXLOCK(*lock);
     if(sendHeader(fd,&reply.hdr)<=0) err=-1;
+    MUTEXUNLOCK(*lock);
     return err;
 }
 
-int posttextall_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats){
+int posttextall_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats,pthread_mutex_t* lock){
     int err=0;
     stringlist* users;
     op_t result=OP_FAIL;
@@ -169,7 +177,9 @@ int posttextall_op(int fd, message_t msg, manager* usrmngr,configs* configurazio
                 fd_receiver=storeMessage(usrmngr,tmp,notify);
                 if(fd_receiver==-1) updndelivered(chattystats,1);
                 else if(fd_receiver>-1){
+                    MUTEXLOCK(*lock);
                     if(sendRequest(fd_receiver,&msg)<=0) err=-1;
+                    MUTEXUNLOCK(*lock);
                     updelivered(chattystats,1);
                 }
                 else{
@@ -183,137 +193,14 @@ int posttextall_op(int fd, message_t msg, manager* usrmngr,configs* configurazio
         result=OP_OK;
     }
     setHeader(&(reply.hdr),result,"");
+    MUTEXLOCK(*lock);
     if(sendHeader(fd,&reply.hdr)<=0) err=-1;
+    MUTEXUNLOCK(*lock);
     return err;
 }
 
-int createInfoFile(char* completepath, char* sender){
-    int ret=0;
-    char* completepathInfo;
-    int infoFile;
-    int dim=strlen(completepath);
-    completepathInfo=malloc((dim+6)*sizeof(char));
-    MEMORYCHECK(completepathInfo);
-    memset(completepathInfo,'\0',(dim+6)*sizeof(char));
-    strncat(completepathInfo,completepath,dim);
-    strncat(completepathInfo,".info",5);
-    if((infoFile=open(completepathInfo,O_WRONLY| O_CREAT |O_TRUNC,00700))==-1){
-        perror("Apertura File");
-        ret=-1;
-    }
-    else{
-        char* position=sender;
-        int len=MAX_NAME_LENGTH+1;
-        int byte_wrote=0;
-        while(len>0){
-            if((byte_wrote=write(infoFile,position,len))<=0){
-                len=0;
-                ret=-1;
-            }
-            else{
-                len -=byte_wrote;
-                position +=byte_wrote;
-            }
-        }
-        close(infoFile);
-    }
-    free(completepathInfo);
-    return ret;
-}
 
-int readInfoFile (manager* usrmngr, char* completepath, char* receiver,int* isPending){
-    int ret=0;
-    char* completepathInfo;
-    struct stat statInfoFile;
-    int infoFile;
-    int dim=strlen(completepath);
-    completepathInfo=malloc((dim+6)*sizeof(char));
-    MEMORYCHECK(completepathInfo);
-    memset(completepathInfo,'\0',(dim+6)*sizeof(char));
-    strncat(completepathInfo,completepath,dim);
-    strncat(completepathInfo,".info",5);
-    if(stat(completepathInfo,&statInfoFile)){
-        perror("Apertura File");
-        ret=-1;
-    }
-    else if((infoFile=open(completepathInfo,O_RDONLY))==-1){
-        perror("Apertura File");
-        ret=-1;
-    }
-    else{
-        char* fileData=NULL;
-        char* currNick=NULL;
-        int nUsername=0;
-        nUsername=statInfoFile.st_size/(MAX_NAME_LENGTH+1);
-        fileData=malloc(statInfoFile.st_size);
-        MEMORYCHECK(fileData);
-        memset(fileData,'\0',statInfoFile.st_size);
-        currNick=fileData;
-        for(int i=0;i<nUsername;i++){
-            char* position=currNick;
-            int len=MAX_NAME_LENGTH+1;
-            int byte_read;
-            while(len>0){
-                if((byte_read=read(infoFile,position,len))<=0){
-                    perror("Lettura File");
-                    ret=-1;
-                    i=nUsername;
-                }
-                len-=byte_read;
-                position+=byte_read;
-            }
-
-            if(i==0){
-                if(strcmp(currNick,receiver)==0 || isingroup(usrmngr,receiver, currNick)){
-                    *isPending=1;
-                    ret=0;
-                }
-                else ret=1;
-            }
-            else if(strcmp(currNick,receiver)==0) *isPending=0;
-
-            currNick+=MAX_NAME_LENGTH+1;
-        }
-        free(fileData);
-        close(infoFile);
-
-    }
-    free(completepathInfo);
-    return ret;
-}
-
-void setDownloaded(char* completepath, char* receiver){
-    char* completepathInfo;
-    int infoFile;
-    int dim=strlen(completepath);
-    completepathInfo=malloc((dim+6)*sizeof(char));
-    MEMORYCHECK(completepathInfo);
-    memset(completepathInfo,'\0',(dim+6)*sizeof(char));
-    strncat(completepathInfo,completepath,dim);
-    strncat(completepathInfo,".info",5);
-    if((infoFile=open(completepathInfo,O_APPEND))==-1)
-        perror("Apertura File");
-
-    else{
-        char* position=receiver;
-        int len=MAX_NAME_LENGTH+1;
-        int byte_wrote=0;
-        while(len>0){
-            if((byte_wrote=write(infoFile,position,len))<=0)
-                len=0;
-
-            else{
-                len -=byte_wrote;
-                position +=byte_wrote;
-            }
-        }
-        close(infoFile);
-    }
-
-    free(completepathInfo);
-}
-
-int postfile_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats){
+int postfile_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats,pthread_mutex_t* lock){
     int err=0;
     op_t result=OP_FAIL;
     int byte_wrote=0;
@@ -351,12 +238,12 @@ int postfile_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,
                 position+=byte_wrote;
 
             }
-            if(createInfoFile(completepath,msg.data.hdr.receiver)==-1 && byte_wrote<0){
+            if(byte_wrote<0){
                 result=OP_FAIL;
                 upderrors(chattystats,1);
             }
 
-            else result=notifymex(fd,msg,usrmngr,configurazione,chattystats);
+            else result=notifymex(fd,msg,usrmngr,configurazione,chattystats,lock);
             close(newFile);
         }
         free(completepath);
@@ -366,11 +253,13 @@ int postfile_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,
     setHeader(&(reply.hdr),result,"");
     setData(&(reply.data),"",NULL,0);
 
+    MUTEXLOCK(*lock);
     if(sendHeader(fd,&reply.hdr)<=0) err=-1;
+    MUTEXUNLOCK(*lock);
     return err;
 }
 
-int getfile_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats){
+int getfile_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats,pthread_mutex_t* lock){
     int err=0;
     int fileToMap;
     struct stat s_file;
@@ -391,39 +280,33 @@ int getfile_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,s
         perror("Apertura del File");
     }
     else {
-        int infoFile=0;
         int isPending=0;
-        infoFile=readInfoFile(usrmngr,completepath, msg.hdr.sender, &isPending);
-        if(infoFile==-1)
-            result=OP_FAIL;
-        else if(infoFile==1)
-            result=OP_NO_PERMISSION;
+        result=OP_OK;
+        fileData=mmap(NULL,s_file.st_size,PROT_READ,MAP_PRIVATE,fileToMap,0);
+        setHeader(&(reply.hdr),result,"");
+        setData(&reply.data,"",fileData,s_file.st_size);
+        MUTEXLOCK(*lock);
+        if(sendRequest(fd,&reply)<=0) err=-1;
         else{
-            result=OP_OK;
-            fileData=mmap(NULL,s_file.st_size,PROT_READ,MAP_PRIVATE,fileToMap,0);
-            setHeader(&(reply.hdr),result,"");
-            setData(&reply.data,"",fileData,s_file.st_size);
-            if(sendRequest(fd,&reply)<=0) err=-1;
-            else{
-                if(isPending==1) updnfile(chattystats,-1);
-                else setDownloaded(completepath, msg.hdr.sender);
-                updfile(chattystats,1);
-            }
-
+            if(isPending==1) updnfile(chattystats,-1);
+            updfile(chattystats,1);
         }
+        MUTEXUNLOCK(*lock);
     }
 
     free(completepath);
     if(result!=OP_OK){
         setHeader(&(reply.hdr),result,"");
         setData(&(reply.data),"",NULL,0);
+        MUTEXLOCK(*lock);
         if(sendRequest(fd,&reply)<=0) err=-1;
+        MUTEXUNLOCK(*lock);
         upderrors(chattystats,1);
     }
     return err;
 }
 
-int getprevmsgs_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats){
+int getprevmsgs_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats,pthread_mutex_t* lock){
     int err=0;
     op_t result=OP_FAIL;
     message_t reply;
@@ -433,13 +316,16 @@ int getprevmsgs_op(int fd, message_t msg, manager* usrmngr,configs* configurazio
         upderrors(chattystats,1);
         setHeader(&(reply.hdr),result,"");
         setData(&(reply.data),"",NULL,0);
+        MUTEXLOCK(*lock);
         if(sendRequest(fd,&reply)<=0) err=-1;
+        MUTEXUNLOCK(*lock);
     }
     else{
         size_t nMex=newHistory->nel;
         memset(&reply,0,sizeof(message_t));
         setHeader(&reply.hdr,result,"");
         setData(&reply.data,"",(char*)&(nMex),sizeof(size_t));
+        MUTEXLOCK(*lock);
         if(sendRequest(fd,&reply)<=0) err=-1;
         else{
             int i=newHistory->first;
@@ -457,13 +343,14 @@ int getprevmsgs_op(int fd, message_t msg, manager* usrmngr,configs* configurazio
                 i=(i+1)%newHistory->size;
             }
         }
+        MUTEXUNLOCK(*lock);
         freeHistory(newHistory);
     }
     return err;
 }
 
 
-int usrlist_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats){
+int usrlist_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats,pthread_mutex_t* lock){
     int err=0;
     message_t reply;
     stringlist* users;
@@ -479,11 +366,13 @@ int usrlist_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,s
         upderrors(chattystats,1);
     }
     setHeader(&(reply.hdr),result,"");
+    MUTEXLOCK(*lock);
     if(sendRequest(fd,&reply)<=1) err=-1;
+    MUTEXUNLOCK(*lock);
     return err;
 }
 
-int unregister_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats){
+int unregister_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats,pthread_mutex_t* lock){
     op_t result=OP_FAIL;
     message_t reply;
     result=unregisterUser(usrmngr,msg.hdr.sender);
@@ -494,11 +383,13 @@ int unregister_op(int fd, message_t msg, manager* usrmngr,configs* configurazion
     else upderrors(chattystats,1);
     setHeader(&(reply.hdr),result,"");
     setData(&(reply.data),"",NULL,0);
+    MUTEXLOCK(*lock);
     sendRequest(fd,&reply);
+    MUTEXUNLOCK(*lock);
     return -1;
 }
 
-int disconnect_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats){
+int disconnect_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats,pthread_mutex_t* lock){
     op_t result=OP_FAIL;
     result=disconnectUser(usrmngr,fd);
     if(result==OP_OK){
@@ -508,7 +399,7 @@ int disconnect_op(int fd, message_t msg, manager* usrmngr,configs* configurazion
     return -1;
 }
 
-int creategroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats){
+int creategroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats,pthread_mutex_t* lock){
     int err=0;
     message_t reply;
     op_t result=OP_FAIL;
@@ -516,11 +407,13 @@ int creategroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazio
     if(result!=OP_OK) upderrors(chattystats,1);
     setHeader(&(reply.hdr),result,"");
     setData(&(reply.data),"",NULL,0);
+    MUTEXLOCK(*lock);
     if(sendRequest(fd,&reply)<=0) err=-1;
+    MUTEXUNLOCK(*lock);
     return err;
 }
 
-int addgroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats){
+int addgroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats,pthread_mutex_t* lock){
     int err=0;
     message_t reply;
     op_t result=OP_FAIL;
@@ -528,11 +421,13 @@ int addgroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,
     if(result!=OP_OK) upderrors(chattystats,1);
     setHeader(&(reply.hdr),result,"");
     setData(&(reply.data),"",NULL,0);
+    MUTEXLOCK(*lock);
     if(sendRequest(fd,&reply)<=0) err=-1;
+    MUTEXUNLOCK(*lock);
     return err;
 }
 
-int delfromgroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats){
+int delfromgroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats,pthread_mutex_t* lock){
     int err=0;
     message_t reply;
     op_t result=OP_FAIL;
@@ -540,11 +435,13 @@ int delfromgroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazi
     if(result!=OP_OK) upderrors(chattystats,1);
     setHeader(&(reply.hdr),result,"");
     setData(&(reply.data),"",NULL,0);
+    MUTEXLOCK(*lock);
     if(sendRequest(fd,&reply)<=0) err=-1;
+    MUTEXUNLOCK(*lock);
     return err;
 }
 
-int delgroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats){
+int delgroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,struct statistics* chattystats,pthread_mutex_t* lock){
     int err=0;
     message_t reply;
     op_t result=OP_FAIL;
@@ -552,11 +449,13 @@ int delgroup_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,
     if(result!=OP_OK) upderrors(chattystats,1);
     setHeader(&(reply.hdr),result,"");
     setData(&(reply.data),"",NULL,0);
+    MUTEXLOCK(*lock);
     if(sendRequest(fd,&reply)<=0) err=-1;
+    MUTEXUNLOCK(*lock);
     return err;
 }
 
-int execute(int fd, manager* usrmngr, configs* configurazione,struct statistics* chattystats){
+int execute(int fd, manager* usrmngr, configs* configurazione,struct statistics* chattystats,pthread_mutex_t* lock){
     int err=0;
     message_t msg;
     message_t reply_err;
@@ -566,33 +465,33 @@ int execute(int fd, manager* usrmngr, configs* configurazione,struct statistics*
     }
     else{
         switch(msg.hdr.op){
-            case REGISTER_OP: err=register_op(fd,msg,usrmngr,configurazione,chattystats);
+            case REGISTER_OP: err=register_op(fd,msg,usrmngr,configurazione,chattystats,lock);
                                 break;
-            case CONNECT_OP: err=connect_op(fd,msg,usrmngr,configurazione,chattystats);
+            case CONNECT_OP: err=connect_op(fd,msg,usrmngr,configurazione,chattystats,lock);
                                 break;
-            case POSTTXT_OP: err=posttxt_op(fd,msg,usrmngr,configurazione,chattystats);
+            case POSTTXT_OP: err=posttxt_op(fd,msg,usrmngr,configurazione,chattystats,lock);
                                 break;
-            case POSTTXTALL_OP: err=posttextall_op(fd,msg,usrmngr,configurazione,chattystats);
+            case POSTTXTALL_OP: err=posttextall_op(fd,msg,usrmngr,configurazione,chattystats,lock);
                                 break;
-            case POSTFILE_OP: err=postfile_op(fd,msg,usrmngr,configurazione,chattystats);
+            case POSTFILE_OP: err=postfile_op(fd,msg,usrmngr,configurazione,chattystats,lock);
                                 break;
-            case GETFILE_OP: err=getfile_op(fd,msg,usrmngr,configurazione,chattystats);
+            case GETFILE_OP: err=getfile_op(fd,msg,usrmngr,configurazione,chattystats,lock);
                                 break;
-            case GETPREVMSGS_OP: err=getprevmsgs_op(fd,msg,usrmngr,configurazione,chattystats);
+            case GETPREVMSGS_OP: err=getprevmsgs_op(fd,msg,usrmngr,configurazione,chattystats,lock);
                                 break;
-            case USRLIST_OP: err=usrlist_op(fd,msg,usrmngr,configurazione,chattystats);
+            case USRLIST_OP: err=usrlist_op(fd,msg,usrmngr,configurazione,chattystats,lock);
                                 break;
-            case UNREGISTER_OP: err=unregister_op(fd,msg,usrmngr,configurazione,chattystats);
+            case UNREGISTER_OP: err=unregister_op(fd,msg,usrmngr,configurazione,chattystats,lock);
                                 break;
-            case DISCONNECT_OP: err=disconnect_op(fd,msg,usrmngr,configurazione,chattystats);
+            case DISCONNECT_OP: err=disconnect_op(fd,msg,usrmngr,configurazione,chattystats,lock);
                                 break;
-            case CREATEGROUP_OP: err=creategroup_op(fd,msg,usrmngr,configurazione,chattystats);
+            case CREATEGROUP_OP: err=creategroup_op(fd,msg,usrmngr,configurazione,chattystats,lock);
                                 break;
-            case ADDGROUP_OP: err=addgroup_op(fd,msg,usrmngr,configurazione,chattystats);
+            case ADDGROUP_OP: err=addgroup_op(fd,msg,usrmngr,configurazione,chattystats,lock);
                                 break;
-            case DELGROUP_OP: err=delfromgroup_op(fd,msg,usrmngr,configurazione,chattystats);
+            case DELGROUP_OP: err=delfromgroup_op(fd,msg,usrmngr,configurazione,chattystats, lock);
                                 break;
-            case DELALLGROUP_OP: err=delgroup_op(fd,msg,usrmngr,configurazione,chattystats);
+            case DELALLGROUP_OP: err=delgroup_op(fd,msg,usrmngr,configurazione,chattystats, lock);
                                 break;
             default:
                 setHeader(&(reply_err.hdr),OP_NOT_EXISTS,"");

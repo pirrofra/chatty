@@ -43,4 +43,5 @@ void freeGroup(void* g){
     groupdata* group=(groupdata*)g;
     free(group->admin);
     icl_hash_destroy(group->users,free,NULL);
+    free(group);
 }
