@@ -60,6 +60,11 @@ int addMessage(history* storia, message_t* mex, int fd);
 */
 history* copyHistory(history* storia);
 
+/**
+ * @function resetPending
+ * @brief segna tutti i messaggi nella history come spediti
+ * @param storia history da aggiornare
+*/
 void resetPending(history* storia);
 
 /**

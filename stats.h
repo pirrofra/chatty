@@ -94,6 +94,19 @@ void updnfile(struct statistics* stats, int n);
 */
 void upderrors(struct statistics* stats, int n);
 
+/**
+ * @function getnusers
+ * @brief restituisce il numero di utenti registrati
+ * @param stats  struttura che conserva le statistiche
+ * @return numero di utenti registrati
+*/
+int getnusers(struct statistics* stats);
+
+/**
+ * @function destroystats
+ * @brief funzione che libera la struttura che conserva le statistiche
+ * @param  stats  struttura che conserva le statistiche
+*/
 void destroystats(struct statistics* stats);
 
 /**

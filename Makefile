@@ -10,9 +10,9 @@
 # IMPORTANTE: completare la lista dei file da consegnare
 #
 FILE_DA_CONSEGNARE=Makefile chatty.c message.h  ops.h stats.h config.h \
-			fileconfig.h groupdata.h history.h icl_hash.h queue.h requestexec.h stringlist.h user.h \
-			connections.c fileconfig.c groupdata.c history.c icl_hash.c queue.c requestexec.c\
-			stats.c stringlist.c user.c message.c listener.c\
+			fileconfig.h groupdata.h history.h icl_hash.h queue.h requestexec.h stringlist.h user.h  arrayLock.h \
+			connections.c fileconfig.c groupdata.c history.c icl_hash.c queue.c requestexec.c \
+			stats.c stringlist.c user.c message.c listener.c arrayLock.c\
 		   DATA/chatty.conf1 DATA/chatty.conf2 connections.h
 # inserire il nome del tarball: es. NinoBixio
 TARNAME=FrancescoPirro
@@ -69,7 +69,8 @@ OBJECTS		= connections.o \
 			stringlist.o \
 			user.o \
 			message.o \
-			listener.o
+			listener.o \
+			arrayLock.o \
 
 # aggiungere qui gli altri include
 INCLUDE_FILES   = connections.h \
@@ -84,7 +85,8 @@ INCLUDE_FILES   = connections.h \
 		  queue.h \
 		  requestexec.h \
 		  stringlist.h \
-		  user.h
+		  user.h \
+		  arrayLock.h \
 
 
 

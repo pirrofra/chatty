@@ -103,6 +103,12 @@ static inline void setData(message_data_t *data, char *rcv, const char *buf, uns
     data->buf      = (char *)buf;
 }
 
+/**
+ * @function copymex
+ * @brief crea un duplicato del messaggio allocandolo in memoria dinamica
+ * @param mex messaggio da copiare
+ * @return puntatore al messaggio copiato, NULL in caso di errore
+*/
 message_t* copymex(message_t mex);
 
 #endif /* MESSAGE_H_ */

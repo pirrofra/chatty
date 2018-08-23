@@ -37,7 +37,7 @@ void initializeStringList(stringlist** strlst, int dim, int str_dim);
  * @param stringa stringa da aggiungere
  * @return 0 successo, -1 errore
 */
-int addString(stringlist* strlst, int i, char* stringa);
+int addString(stringlist** strlst, int i, char* stringa);
 
 
 /**

@@ -15,6 +15,7 @@
 #include <ops.h>
 #include <pthread.h>
 #include <stringlist.h>
+#include <arrayLock.h>
 
 
 #ifndef _user_h_
@@ -50,9 +51,9 @@ typedef struct{
     icl_hash_t* groups;
     int max_connected_user;
     int history_size;
-    pthread_mutex_t* lockr;
+    arrayLock lockr;
     pthread_mutex_t lockc;
-    pthread_mutex_t* lockg;
+    arrayLock lockg;
 } manager;
 
 /**
@@ -61,9 +62,10 @@ typedef struct{
  * @param usrmngr puntantore al manager da inizializzare
  * @param max_user massimo utenti connessi
  * @param dim_history numero massimo di messaggi salvabili
+ * @param numMutex numero di Mutex per le hashtable
  * @return 0 operazione riuscita, -1 errore
 */
-int initializeManager(manager* usrmngr, int max_user, int dim_history);
+int initializeManager(manager* usrmngr, int max_user, int dim_history, int numMutex);
 
 
 /**
@@ -124,7 +126,7 @@ unsigned int simpleHash(void* key);
  * @brief semplice funzione compare
  * @param a primo valore intero da comparare
  * @param b secondo valore intero da comparare
- * @return a-b
+ * @return 1 se a==b, 0 altrimenti
 */
 int simpleCompare(void* a, void* b);
 
@@ -138,8 +140,16 @@ int simpleCompare(void* a, void* b);
 */
 int storeMessage(manager* usrmngr, char* nickname ,message_t* msg);
 
-
+/**
+ * @function prevMessage
+ * @brief copia la history dei messaggi dell'utente in ordine dal più recente al meno recente
+ * @param usrmngr puntatore al gestore degli Utenti
+ * @param nickname utente di cui copiare la history
+ * @param newHistory puntatore al puntatore della nuova history
+ * @return op_t esito operazione
+*/
 op_t prevMessage(manager* usrmngr, char* nickname,history** newHistory);
+
 /**
  * @function createGroup
  * @brief crea un nuovo gruppo
@@ -193,9 +203,10 @@ stringlist* userGroupList(manager* usrmngr, char* groupname);
  * @function registredUserList
  * @brief ritorna la lista degli utenti registrati
  * @param usrmngr puntatore al gestore degli utenti
+ * @param numRegUsers numero di Utenti Registrati
  * @return lista degli utenti registrati
 */
-stringlist* registredUserList(manager* usrmngr);
+stringlist* registredUserList(manager* usrmngr,int numRegUsers);
 
 /**
  * @function connectedUserList
@@ -205,11 +216,29 @@ stringlist* registredUserList(manager* usrmngr);
 */
 stringlist* connectedUserList(manager* usrmngr);
 
-
+/**
+ * @function groupexist
+ * @param usrmngr puntatore al gestore degli Utenti
+ * @param name nome del gruppo da controllare
+ * @return 0 il gruppo non esiste, 1 esiste
+*/
 int groupexist(manager* usrmngr, char* name);
 
+/**
+ * @function isingroup
+ * @brief verifica la presenza di un utente di nome nickname nel gruppo groupname
+ * @param usrmngr puntatore al gestore degli Utenti
+ * @param nickname utente da cercare nel gruppo
+ * @param groupname gruppo in cui cercare
+ * @param 0 l'utente o il gruppo non esiste, 1 l'utente è nel gruppo
+*/
 int isingroup(manager* usrmngr, char* nickname,char* groupname);
 
+/**
+ * @function destroy
+ * @brief distrugge il gestore degli Utenti
+ * @param usrmngr puntatore al gestore degli Utenti
+*/
 void destroy(manager* usrmngr);
 
 #endif //_user_h_
