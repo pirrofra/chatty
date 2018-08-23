@@ -571,7 +571,7 @@ int usrlist_op(int fd, message_t msg, manager* usrmngr,configs* configurazione,s
     }
     setHeader(&(reply.hdr),result,"");
     MUTEXARRAYLOCK((*writingLock),fd);
-    if(sendRequest(fd,&reply)<=1) errConnection=-1;
+    if(sendRequest(fd,&reply)<=0) errConnection=-1;
     MUTEXARRAYUNLOCK((*writingLock),fd);
     //trasmette l'esito dell'operazione
 

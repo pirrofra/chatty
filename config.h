@@ -32,8 +32,8 @@
 
 #define SYSCALLCHECK(X,ERR) if((errno=(X))){perror(ERR);return -1;}
 #define SOCKETCHECK(X) if((X)==-1){perror("Creazione Socket");return -1;}
-#define TRYWRITE(X) {int errore=0; if((errore=X)==-1){perror("Write");return -1;}else if(errore==0)return 0;};
-#define TRYREAD(X) {int errore=0; if((errore=X)==-1){perror("Read");return -1;}else if(errore==0)return 0;}
+#define TRYWRITE(X) {int errore=0; if((errore=X)==-1&& errno!=EPIPE){perror("Write");return -1;}else if(errore==0||errno==EPIPE)return 0;};
+#define TRYREAD(X) {int errore=0; if((errore=X)==-1&& errno!=ECONNRESET){perror("Read");return -1;}else if(errore==0||errno==ECONNRESET)return 0;}
 #define INITIALIZE(X) if((X)){printf("Errore nella Inizializzazzione, Termino il server\n");return -1;}
 #define SIG_ACTION(SIG,X) if(sigaction(SIG,&X,NULL)==-1){perror("sigaction");return -1;}
 //ritornano -1 e stampano errno se la systemcall fallisce
