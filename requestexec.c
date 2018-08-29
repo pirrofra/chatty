@@ -5,7 +5,7 @@
  * Docenti: Prencipe, Torquati
  *
  */
-/** @file requestexe.c
+/** @file requestexec.c
   * @author Francesco Pirrò 544539
   * si dichiara che il contenuto di questo file è in ogni sua parte opera originale  dell'autore
 */

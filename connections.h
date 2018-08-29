@@ -19,7 +19,7 @@
 #include <message.h>
 
 /**
- * @file  connection.h
+ * @file  connections.h
  * @brief Contiene le funzioni che implementano il protocollo
  *        tra i clients ed il server
  */

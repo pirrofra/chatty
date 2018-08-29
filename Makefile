@@ -13,7 +13,7 @@ FILE_DA_CONSEGNARE=Makefile chatty.c message.h  ops.h stats.h config.h \
 			fileconfig.h groupdata.h history.h icl_hash.h queue.h requestexec.h stringlist.h user.h  arrayLock.h \
 			connections.c fileconfig.c groupdata.c history.c icl_hash.c queue.c requestexec.c \
 			stats.c stringlist.c user.c message.c listener.c arrayLock.c\
-		   DATA/chatty.conf1 DATA/chatty.conf2 connections.h
+		   DATA/chatty.conf1 DATA/chatty.conf2 connections.h myBashScript.sh
 # inserire il nome del tarball: es. NinoBixio
 TARNAME=FrancescoPirro
 # inserire il corso di appartenenza: CorsoA oppure CorsoB
